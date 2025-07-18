@@ -21,6 +21,8 @@ import requests
 import ctypes
 from ctypes import wintypes
 import webbrowser
+import qrcode
+from PIL import Image, ImageTk
 
 # 导入原始模块
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -383,6 +385,61 @@ class BiliLiveGUI:
         self.log_area = scrolledtext.ScrolledText(log_frame, wrap=tk.WORD, height=8)
         self.log_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         self.log_area.config(state=tk.DISABLED)
+
+    def show_qr_code(self, qr_url):
+        """生成并显示二维码"""
+        # 创建新窗口
+        qr_window = tk.Toplevel(self.root)
+        qr_window.title("人脸认证二维码")
+        # qr_window.geometry("400x450")
+        width = 400
+        height = 450
+
+        screen_width = qr_window.winfo_screenwidth()
+        screen_height = qr_window.winfo_screenheight()
+        x = (screen_width / 2) - (width / 2)
+        y = (screen_height / 2) - (height / 2)
+        qr_window.geometry('%dx%d+%d+%d' % (width, height, x, y))
+
+        qr_window.resizable(False, False)
+
+        # 生成二维码
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(qr_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # 转换为Tkinter可用的图像
+        img_tk = ImageTk.PhotoImage(img)
+
+        # 显示二维码
+        label = tk.Label(qr_window, image=img_tk)
+        label.image = img_tk  # 保持引用，避免被垃圾回收
+        label.pack(pady=10)
+
+        # 添加提示文字
+        tk.Label(
+            qr_window,
+            text="请使用B站客户端扫描二维码完成人脸认证",
+            font=("微软雅黑", 10)
+        ).pack(pady=10)
+
+        def close_qr_window():
+            qr_window.destroy()
+            self.log_message("已进行人脸认证！")
+
+        # 添加关闭按钮
+        tk.Button(
+            qr_window,
+            text="关闭",
+            command=close_qr_window,
+            width=15
+        ).pack(pady=10)
 
     def log_message(self, message):
         """记录日志消息，并同步更新所有日志区域"""
@@ -753,17 +810,25 @@ class BiliLiveGUI:
             )
 
             if response.status_code != 200 or response.json()['code'] != 0:
-                self.log_message(f"获取推流码失败: {response.json()}")
-                messagebox.showerror("错误", "获取推流码失败，cookie可能已失效！")
+                if response.json()['code'] == 60024:
+                    self.log_message("获取推流码失败: 需要进行人脸认证")
+                    qr: str = response.json()['data']['qr']
 
-                # 删除cookies文件
-                cookies_path = os.path.join(my_path, cookies_file)
-                if os.path.exists(cookies_path):
-                    try:
-                        os.remove(cookies_path)
-                        self.log_message("已删除失效的cookies.txt文件")
-                    except Exception as e:
-                        self.log_message(f"删除cookies.txt文件时出错: {str(e)}")
+                    # 生成二维码并显示
+                    self.root.after(0, lambda: self.show_qr_code(qr))
+
+                else:
+                    self.log_message(f"获取推流码失败: {response.json()}")
+                    messagebox.showerror("错误", "获取推流码失败，cookie可能已失效！")
+
+                    # 删除cookies文件
+                    cookies_path = os.path.join(my_path, cookies_file)
+                    if os.path.exists(cookies_path):
+                        try:
+                            os.remove(cookies_path)
+                            self.log_message("已删除失效的cookies.txt文件")
+                        except Exception as e:
+                            self.log_message(f"删除cookies.txt文件时出错: {str(e)}")
 
                 return
 
