@@ -7,10 +7,10 @@
 
 更新时间：2025-06-24
 """
-
-
+import hashlib
 import json
 import tkinter as tk
+import urllib
 from tkinter import ttk, messagebox, filedialog, scrolledtext
 import threading
 import os
@@ -36,6 +36,15 @@ code_file = 'code.txt'
 cookies_file = 'cookies.txt'
 last_settings_file = 'last_settings.json'
 my_path = os.getcwd()
+
+def appsign(params, appkey, appsec):
+    '为请求参数进行 APP 签名'
+    params.update({'appkey': appkey})
+    params = dict(sorted(params.items())) # 按照 key 重排参数
+    query = urllib.parse.urlencode(params) # 序列化参数
+    sign = hashlib.md5((query+appsec).encode()).hexdigest() # 计算 api 签名
+    params.update({'sign':sign})
+    return params
 
 
 class BiliLiveGUI:
@@ -528,6 +537,8 @@ class BiliLiveGUI:
             data['csrf_token'] = data['csrf'] = self.csrf.get()
             data['title'] = self.live_title.get()
 
+
+
             # 转换为cookies字典
             cookies_pattern = re.compile(r'(\w+)=([^;]+)(?:;|$)')
             cookies = {key: unquote(value) for key, value in cookies_pattern.findall(self.cookie_str.get())}
@@ -770,14 +781,29 @@ class BiliLiveGUI:
         try:
             # 准备请求参数
             header = dt.header
+            # 转换为cookies字典
+            cookies_pattern = re.compile(r'(\w+)=([^;]+)(?:;|$)')
+            cookies = {key: unquote(value) for key, value in cookies_pattern.findall(self.cookie_str.get())}
+            app_key = "aae92bc66f3edfab"
+            app_sec = "af125a0d5279fd576c1b4418a3e8276d"
+
+            v_data = dt.version_data
+            v_data['ts'] = requests.get(url="https://api.bilibili.com/x/report/click/now", headers=header).json()["data"]["now"]
+            v_data = appsign(v_data, app_key, app_sec)
+            query = urllib.parse.urlencode(v_data)
+
+            version_json = requests.get(url=f"https://api.live.bilibili.com/xlive/app-blink/v1/liveVersionInfo/getHomePageLiveVersion?{query}", headers=header, cookies=cookies).json()
+
             data = dt.start_data.copy()
             data['room_id'] = self.room_id.get()
             data['csrf_token'] = data['csrf'] = self.csrf.get()
             data['area_v2'] = area_id
+            data['build'] = version_json['data']['build']
+            data['version'] = version_json['data']['curr_version']
+            data['ts'] = requests.get(url="https://api.bilibili.com/x/report/click/now", headers=header).json()["data"]["now"]
+            data = appsign(data, app_key, app_sec)
 
-            # 转换为cookies字典
-            cookies_pattern = re.compile(r'(\w+)=([^;]+)(?:;|$)')
-            cookies = {key: unquote(value) for key, value in cookies_pattern.findall(self.cookie_str.get())}
+            # print(data)
 
             # 设置直播标题
             title_data = dt.title_data.copy()
@@ -810,6 +836,8 @@ class BiliLiveGUI:
             )
 
             if response.status_code != 200 or response.json()['code'] != 0:
+                print(response.json())
+
                 if response.json()['code'] == 60024:
                     self.log_message("获取推流码失败: 需要进行人脸认证")
                     qr: str = response.json()['data']['qr']

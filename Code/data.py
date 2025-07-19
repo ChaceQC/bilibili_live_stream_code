@@ -24,6 +24,10 @@ start_data = \
         'backup_stream': '0',
         'csrf_token': '',  # 填csrf
         'csrf': '',  # 填csrf，这两个值一样的
+        'build': '1234',
+        'version': '1.0.0',
+        # 'ts': '',
+        # 'type': '2',
     }
 
 stop_data = \
@@ -62,4 +66,10 @@ bullet_data = \
         "roomid": 0,
         "csrf_token": '',
         "csrf": '',
+    }
+
+version_data = \
+    {
+        "system_version": 2,
+        "ts": "",
     }
