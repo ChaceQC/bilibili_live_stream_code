@@ -52,8 +52,8 @@ jobs:
         run: |
           pyinstaller --onefile main/bilibili_live_stream_code.py \
             --name "${{ needs.check-event.outputs.pluginName }}" \
-            --icon "$(pwd)/bico.ico" \
-            --add-data "bico.ico:." \
+            --icon "$(pwd)/main/bico.ico" \
+            --add-data "main/bico.ico:." \
             --noconsole
       - name: Prepare Artifact
         run: |
@@ -84,8 +84,8 @@ jobs:
         run: |
           pyinstaller --onefile main/bilibili_live_stream_code.py \
             --name "${{ needs.check-event.outputs.pluginName }}" \
-            --icon "$(pwd)/bico.ico" \
-            --add-data "bico.ico:." \
+            --icon "$(pwd)/main/bico.ico" \
+            --add-data "main/bico.ico:." \
             --noconsole
       - name: Prepare Artifact
         run: |
@@ -116,8 +116,8 @@ jobs:
         run: |
           pyinstaller --onefile main/bilibili_live_stream_code.py `
             --name "${{ needs.check-event.outputs.pluginName }}" `
-            --icon "$(pwd)/bico.ico" `
-            --add-data "bico.ico;." `
+            --icon "$(pwd)/main/bico.ico" `
+            --add-data "main/bico.ico;." `
             --noconsole
       - name: Prepare Artifact
         run: |

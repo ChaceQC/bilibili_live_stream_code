@@ -39,16 +39,8 @@ last_settings_file = 'last_settings.json'
 partition_file = 'partition.json'
 config_file = 'config.ini'
 my_path = os.getcwd()
+resource_path = sys._MEIPASS if hasattr(sys, "_MEIPASS") else my_path
 now_version = "1.1.6"
-
-def resource_path(relative_path):
-    """获取打包后资源路径"""
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
-
 
 def appsign(params, appkey, appsec):
     """
@@ -116,7 +108,7 @@ class BiliLiveGUI:
         self.live_code = tk.StringVar()
         self.live_server = tk.StringVar()
         self.avatar_image_label = tk.Label
-        self.avatar_image = ImageTk.PhotoImage(file=resource_path('bico.ico'))
+        self.avatar_image = ImageTk.PhotoImage(file=os.path.join(resource_path, 'bico.ico'))
         self.close_to_tray = tk.BooleanVar(value=True)
 
         # 分区数据
@@ -154,7 +146,7 @@ class BiliLiveGUI:
 
         # 应用图标
         try:
-            icon_path = resource_path('bico.ico')
+            icon_path = os.path.join(resource_path, 'bico.ico')
             if os.path.exists(icon_path):
                 self.root.iconbitmap(icon_path)
         except:
@@ -525,7 +517,7 @@ class BiliLiveGUI:
         """创建系统托盘图标"""
         # 加载图标
         try:
-            icon_path = resource_path('bico.ico')
+            icon_path = os.path.join(resource_path, 'bico.ico')
             if os.path.exists(icon_path):
                 image = Image.open(icon_path)
             else:
