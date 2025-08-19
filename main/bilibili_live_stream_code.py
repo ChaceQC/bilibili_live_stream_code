@@ -3,9 +3,9 @@
 
 作者：Chace
 
-版本：1.0.9
+版本：1.0.10
 
-更新时间：2025-08-07
+更新时间：2025-08-08
 """
 import datetime
 import hashlib
@@ -40,7 +40,7 @@ partition_file = 'partition.json'
 config_file = 'config.ini'
 my_path = os.getcwd()
 resource_path = sys._MEIPASS if hasattr(sys, "_MEIPASS") else my_path
-now_version = "1.1.6"
+now_version = "1.1.7"
 
 def appsign(params, appkey, appsec):
     """
@@ -693,7 +693,7 @@ class BiliLiveGUI:
         if self.cookie_str.get() == "":
             return
         else:
-            thread = threading.Thread(target=self._show_up_info_thread)
+            thread = threading.Thread(target=self._show_up_info_thread, daemon=True)
             thread.start()
 
     def _show_up_info_thread(self):
@@ -1249,9 +1249,9 @@ class BiliLiveGUI:
         """
         try:
             if method == self.ApiMethods.GET:
-                resp = requests.get(url=api, params=params, cookies=cookies, headers=headers, data=data)
+                resp = requests.get(url=api, params=params, cookies=cookies, headers=headers, data=data, timeout=10)
             elif method == self.ApiMethods.POST:
-                resp = requests.post(url=api, params=params, cookies=cookies, headers=headers, data=data)
+                resp = requests.post(url=api, params=params, cookies=cookies, headers=headers, data=data, timeout=10)
 
             if resp.status_code == 200:
                 self.log_message(success_msg)
