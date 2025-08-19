@@ -1,0 +1,132 @@
+name: Build Project
+
+on:
+  workflow_call:
+    outputs:
+      pluginName:
+        description: Project name detected by parsing build spec file
+        value: ${{ jobs.check-event.outputs.pluginName }}
+
+jobs:
+  check-event:
+    name: Check GitHub Event Data 🔎
+    runs-on: ubuntu-24.04
+    outputs:
+      pluginName: ${{ steps.setup.outputs.pluginName }}
+      pluginVersion: ${{ steps.setup.outputs.pluginVersion }}
+      displayName: ${{ steps.setup.outputs.displayName }}
+      author: ${{ steps.setup.outputs.author }}
+      commitHash: ${{ steps.setup.outputs.commitHash }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse buildspec.json ☑️
+        id: setup
+        run: |
+          set -e
+          plugin_name="$(jq -r '.name' buildspec.json)"
+          plugin_version="$(jq -r '.version' buildspec.json)"
+          display_name="$(jq -r '.displayName' buildspec.json)"
+          author="$(jq -r '.author' buildspec.json)"
+          echo "pluginName=$plugin_name" >> $GITHUB_OUTPUT
+          echo "pluginVersion=$plugin_version" >> $GITHUB_OUTPUT
+          echo "displayName=$display_name" >> $GITHUB_OUTPUT
+          echo "author=$author" >> $GITHUB_OUTPUT
+          echo "commitHash=${GITHUB_SHA:0:9}" >> $GITHUB_OUTPUT
+
+  build-linux:
+    name: Build for Linux 🐧
+    runs-on: ubuntu-24.04
+    needs: check-event
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies 📦
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Build with PyInstaller 🐍
+        run: |
+          pyinstaller --onefile main/bilibili_live_stream_code.py \
+            --name "${{ needs.check-event.outputs.pluginName }}" \
+            --icon "$(pwd)/bico.ico" \
+            --add-data "bico.ico:." \
+            --noconsole
+      - name: Prepare Artifact
+        run: |
+          mkdir -p artifact
+          cp dist/${{ needs.check-event.outputs.pluginName }} artifact/
+          cp main/config.ini artifact/
+          cp main/partition.json artifact/
+      - name: Upload ZIP Artifact 📡
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.check-event.outputs.pluginName }}-${{ needs.check-event.outputs.pluginVersion }}-linux-${{ needs.check-event.outputs.commitHash }}
+          path: artifact
+
+  build-macos:
+    name: Build for macOS 🍏
+    runs-on: macos-15
+    needs: check-event
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies 📦
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Build with PyInstaller 🐍
+        run: |
+          pyinstaller --onefile main/bilibili_live_stream_code.py \
+            --name "${{ needs.check-event.outputs.pluginName }}" \
+            --icon "$(pwd)/bico.ico" \
+            --add-data "bico.ico:." \
+            --noconsole
+      - name: Prepare Artifact
+        run: |
+          mkdir -p artifact
+          cp dist/${{ needs.check-event.outputs.pluginName }} artifact/
+          cp main/config.ini artifact/
+          cp main/partition.json artifact/
+      - name: Upload ZIP Artifact 📡
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.check-event.outputs.pluginName }}-${{ needs.check-event.outputs.pluginVersion }}-macos-${{ needs.check-event.outputs.commitHash }}
+          path: artifact
+
+  build-windows:
+    name: Build for Windows 🪟
+    runs-on: windows-2022
+    needs: check-event
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies 📦
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Build with PyInstaller 🐍
+        run: |
+          pyinstaller --onefile main/bilibili_live_stream_code.py `
+            --name "${{ needs.check-event.outputs.pluginName }}" `
+            --icon "$(pwd)/bico.ico" `
+            --add-data "bico.ico;." `
+            --noconsole
+      - name: Prepare Artifact
+        run: |
+          mkdir artifact
+          copy dist\${{ needs.check-event.outputs.pluginName }}.exe artifact\
+          copy main\config.ini artifact\
+          copy main\partition.json artifact\
+      - name: Upload ZIP Artifact 📡
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.check-event.outputs.pluginName }}-${{ needs.check-event.outputs.pluginVersion }}-windows-${{ needs.check-event.outputs.commitHash }}
+          path: artifact
