@@ -206,7 +206,7 @@ class BiliLiveGUI:
 
     def show_first_run_info(self):
         """显示首次运行信息"""
-        help_path = os.path.join(my_path, '使用说明.txt')
+        help_path = os.path.join(resource_path, '使用说明.txt')
         if os.path.exists(help_path):
             try:
                 util.open_file(help_path)
@@ -1221,7 +1221,7 @@ class BiliLiveGUI:
 
     def show_help(self):
         """显示使用说明"""
-        help_path = os.path.join(my_path, '使用说明.txt')
+        help_path = os.path.join(resource_path, '使用说明.txt')
         if os.path.exists(help_path):
             try:
                 util.open_file(help_path)

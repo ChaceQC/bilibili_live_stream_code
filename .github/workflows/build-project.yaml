@@ -54,6 +54,7 @@ jobs:
             --name "${{ needs.check-event.outputs.pluginName }}" \
             --icon "$(pwd)/main/bico.ico" \
             --add-data "main/bico.ico:." \
+            --add-data "main/使用说明.txt:." \
             --noconsole
       - name: Prepare Artifact
         run: |
@@ -86,6 +87,7 @@ jobs:
             --name "${{ needs.check-event.outputs.pluginName }}" \
             --icon "$(pwd)/main/bico.ico" \
             --add-data "main/bico.ico:." \
+            --add-data "main/使用说明.txt:." \
             --noconsole
       - name: Prepare Artifact
         run: |
@@ -118,6 +120,7 @@ jobs:
             --name "${{ needs.check-event.outputs.pluginName }}" `
             --icon "$(pwd)/main/bico.ico" `
             --add-data "main/bico.ico;." `
+            --add-data "main/使用说明.txt;." `
             --noconsole
       - name: Prepare Artifact
         run: |
