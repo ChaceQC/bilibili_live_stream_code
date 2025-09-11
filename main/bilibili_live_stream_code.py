@@ -3,14 +3,15 @@
 
 作者：Chace
 
-版本：1.0.10
+版本：1.0.11
 
-更新时间：2025-08-08
+更新时间：2025-09-11
 """
 import datetime
 import hashlib
 import io
 import json
+import time
 import tkinter as tk
 import urllib
 from tkinter import ttk, messagebox, filedialog, scrolledtext
@@ -110,6 +111,7 @@ class BiliLiveGUI:
         self.avatar_image_label = tk.Label
         self.avatar_image = ImageTk.PhotoImage(file=os.path.join(my_path, 'B站图标.ico'))
         self.close_to_tray = tk.BooleanVar(value=True)
+        self.show_up_info_time = time.time() - 301
 
         # 分区数据
         self.partition_data = {}
@@ -183,7 +185,7 @@ class BiliLiveGUI:
         selected_tab = self.notebook.select()
         tab_name = self.notebook.tab(selected_tab, "text")
 
-        if tab_name == "账号设置":
+        if tab_name == "账号设置" and time.time() - self.show_up_info_time > 300:
             self.show_up_info()
 
 
@@ -384,6 +386,24 @@ class BiliLiveGUI:
                                        foreground="purple")
         self.dynamic_label.pack(anchor=tk.CENTER)
         ttk.Label(dynamic_frame, text="动态").pack(anchor=tk.CENTER)
+
+        # 添加手动刷新
+        def show_up_info_menu(event):
+            """显示UP主信息右键菜单"""
+            menu = tk.Menu(self.root, tearoff=False)
+            menu.add_command(label="刷新", command=self.show_up_info)
+            menu.post(event.x_root, event.y_root)
+
+        def bind_up_info_menu(frame):
+            """递归绑定右键菜单到框架及其所有子组件"""
+            frame.bind("<Button-3>", show_up_info_menu)
+            for child in frame.winfo_children():
+                if isinstance(child, (tk.Frame, ttk.Frame)):
+                    bind_up_info_menu(child)
+                else:
+                    child.bind("<Button-3>", show_up_info_menu)
+
+        bind_up_info_menu(info_frame)
 
     def create_live_tab(self):
         """创建直播设置选项卡"""
@@ -697,6 +717,7 @@ class BiliLiveGUI:
             thread.start()
 
     def _show_up_info_thread(self):
+        self.show_up_info_time = time.time()
         cookies = util.ck_str_to_dict(self.cookie_str.get())
         success: bool
         info_json: dict
