@@ -577,10 +577,14 @@ class BiliLiveGUI:
                 self.on_close()
                 return
 
-
-        # 在新线程中运行托盘图标
-        self.tray_thread = threading.Thread(target=self.tray_icon.run, daemon=True)
-        self.tray_thread.start()
+        # 在新线程中运行托盘图标(Windows)
+        if sys.platform == "win32":
+            self.tray_thread = threading.Thread(
+                target=self.tray_icon.run, daemon=True)
+            self.tray_thread.start()
+        # 使用主线程创建图标，后台负责图标运行(macOS)
+        elif sys.platform == "darwin":
+            self.tray_icon.run_detached()
 
     def get_close_method(self):
         """获取关闭窗口的方法"""
