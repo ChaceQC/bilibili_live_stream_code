@@ -3,9 +3,9 @@
 
 作者：Chace
 
-版本：1.1.0
+版本：1.1.1
 
-更新时间：2025-07-20
+更新时间：2025-11-04
 
 常用函数：
 
@@ -171,7 +171,12 @@ def login_ui() -> dict | None:
     window = tk.Tk()
     center_window(window, 600, 550)
     # 设置统一宽度的字体
-    label_font = ('Courier New', 12)  # 使用 monospace 字体
+    import platform
+    system = platform.system()
+    if system == 'Linux':
+        label_font = ('DejaVu Sans Mono', 12)
+    else:
+        label_font = ('Courier New', 12)
     window.title('B站推流码获取工具')
     qr_str, qr_key = get_qr()
     cookies_list = [None]
