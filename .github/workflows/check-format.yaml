@@ -1,0 +1,28 @@
+name: Check Code Formatting 🛠️
+on:
+  workflow_call:
+jobs:
+  python-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install formatters
+        run: |
+          pip install black isort ruff
+
+      - name: Check formatting with Black
+        run: black --check --diff .
+
+      - name: Check imports with isort
+        run: isort --check-only --diff .
+
+      - name: Lint with Ruff
+        run: ruff check .

@@ -40,8 +40,8 @@ last_settings_file = 'last_settings.json'
 partition_file = 'partition.json'
 config_file = 'config.ini'
 my_path = os.getcwd()
+resource_path = sys._MEIPASS if hasattr(sys, "_MEIPASS") else my_path
 now_version = "1.1.7"
-
 
 def appsign(params, appkey, appsec):
     """
@@ -109,7 +109,7 @@ class BiliLiveGUI:
         self.live_code = tk.StringVar()
         self.live_server = tk.StringVar()
         self.avatar_image_label = tk.Label
-        self.avatar_image = ImageTk.PhotoImage(file=os.path.join(my_path, 'B站图标.ico'))
+        self.avatar_image = ImageTk.PhotoImage(file=os.path.join(resource_path, 'bico.ico'))
         self.close_to_tray = tk.BooleanVar(value=True)
         self.show_up_info_time = time.time() - 301
 
@@ -148,7 +148,7 @@ class BiliLiveGUI:
 
         # 应用图标
         try:
-            icon_path = os.path.join(my_path, 'B站图标.ico')
+            icon_path = os.path.join(resource_path, 'bico.ico')
             if os.path.exists(icon_path):
                 self.root.iconbitmap(icon_path)
         except:
@@ -208,7 +208,7 @@ class BiliLiveGUI:
 
     def show_first_run_info(self):
         """显示首次运行信息"""
-        help_path = os.path.join(my_path, '使用说明.txt')
+        help_path = os.path.join(resource_path, '使用说明.txt')
         if os.path.exists(help_path):
             try:
                 util.open_file(help_path)
@@ -537,7 +537,7 @@ class BiliLiveGUI:
         """创建系统托盘图标"""
         # 加载图标
         try:
-            icon_path = os.path.join(my_path, 'B站图标.ico')
+            icon_path = os.path.join(resource_path, 'bico.ico')
             if os.path.exists(icon_path):
                 image = Image.open(icon_path)
             else:
@@ -1246,7 +1246,7 @@ class BiliLiveGUI:
 
     def show_help(self):
         """显示使用说明"""
-        help_path = os.path.join(my_path, '使用说明.txt')
+        help_path = os.path.join(resource_path, '使用说明.txt')
         if os.path.exists(help_path):
             try:
                 util.open_file(help_path)
