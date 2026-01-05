@@ -675,7 +675,8 @@ class BiliLiveGUI:
         """自动获取cookies"""
         self.log_message("开始自动获取账号信息...")
         # 在新线程中执行获取cookies的操作
-        threading.Thread(target=self._auto_get_cookies_thread, daemon=True).start()
+        # threading.Thread(target=self._auto_get_cookies_thread, daemon=True).start()
+        self._auto_get_cookies_thread()
 
     def _auto_get_cookies_thread(self):
         try:
