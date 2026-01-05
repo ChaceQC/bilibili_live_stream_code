@@ -27,7 +27,6 @@ import json
 import tkinter
 import tkinter as tk
 from util import center_window
-from PIL import Image, ImageTk
 
 def get_qrcode() -> dict:
     """
@@ -63,29 +62,14 @@ def get_qr() -> tuple:
     qrcode_url = data["url"]
     qrcode_key = data["qrcode_key"]
 
-
-            
-    qr = qrcode.QRCode(
-            version=None,  # 自动选择合适版本
-            error_correction=qrcode.constants.ERROR_CORRECT_H,  # 高纠错率
-            box_size=5,
-            border=4,
-        )
-    # 添加数据
+    # 显示二维码URL并生成文本二维码
+    output = io.StringIO()
+    qr = qrcode.QRCode()
     qr.add_data(qrcode_url)
-    qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white")
+    qr.print_ascii(out=output, tty=False, invert=False)
+    qr_string = output.getvalue()
 
-    scaled_img = qr_img.resize((400, 400), Image.Resampling.NEAREST)
-    photo = ImageTk.PhotoImage(scaled_img)
-
-    # # 显示二维码URL并生成文本二维码
-    # output = io.StringIO()
-    # qr = qrcode.QRCode()
-    # qr.add_data(qrcode_url)
-    # qr.print_ascii(out=output, tty=False, invert=False)
-    # qr_string = output.getvalue()
-    return photo, qrcode_key
+    return qr_string, qrcode_key
 
 
 def login(qr_string: str, qrcode_key: str) -> dict:
@@ -184,7 +168,7 @@ def login_ui() -> dict | None:
     扫码登录窗口
     :return: 登录失败返回None，否则返回cookies
     """
-    window = tk.Toplevel()
+    window = tk.Tk()
     center_window(window, 600, 550)
     # 设置统一宽度的字体
     import platform
@@ -194,22 +178,18 @@ def login_ui() -> dict | None:
     else:
         label_font = ('Courier New', 12)
     window.title('B站推流码获取工具')
-    qr_img, qr_key = get_qr()
-
-
-
+    qr_str, qr_key = get_qr()
     cookies_list = [None]
     login_label = tk.Label(window, text='\n扫描二维码登录 ', anchor='center', font=label_font)
     login_label.pack()
-
-    tk.Label(window, image=qr_img, anchor='center').pack()
+    tk.Label(window, text=qr_str, anchor='center', font=label_font).pack()
     login_enter(window, qr_key, cookies_list, login_label, False)
 
     # 使窗口避免被遮挡，并且获取焦点
     window.attributes('-topmost', True)
     window.bind("<FocusIn>", lambda event: window.attributes('-topmost', False))
-    window.wait_window(window)
 
+    window.mainloop()
     return cookies_list[0]
 
 
