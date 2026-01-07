@@ -69,7 +69,7 @@ pyinstaller --onefile \
             --add-data "main/使用说明.txt:." \
             --add-data "main/config.ini:." \
             --hidden-import "PIL._tkinter_finder" \
-            --name "${{ env.APP_NAME }}" \
+            --name "B站推流码获取工具" \
             main/bilibili_live_stream_code.py
 ```
 
