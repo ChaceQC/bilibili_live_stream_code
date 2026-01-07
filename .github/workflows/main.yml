@@ -1,21 +1,26 @@
-name: Build Multi-Platform Executables
+name: Build and Release Multi-Platform Executables
 
 on:
   push:
-    branches: [ "better_pack" ]
+    branches: ["master"]
+    tags:
+      - "v*" # This triggers the release when you push a tag like v1.0.0
   pull_request:
-    branches: [ "better_pack" ]
+    branches: ["master"]
   workflow_dispatch:
 
 env:
   APP_NAME: "Bilibili_Live_Tool"
   DISPLAY_NAME: "B站推流码获取工具"
 
+# Necessary permissions to create a release
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
       matrix:
-        # Runs two separate jobs in parallel
         os: [windows-latest, ubuntu-latest]
         include:
           - os: windows-latest
@@ -48,12 +53,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        shell: bash # Use bash for cross-platform compatibility in this step
+        shell: bash
 
       - name: Build with PyInstaller
         shell: bash
         run: |
-          # Use the matrix separator ( ; for Win, : for Linux )
           pyinstaller --onefile \
             --windowed \
             --icon="main/B站图标.ico" \
@@ -79,7 +83,37 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          # Creates separate artifacts: Bilibili-Live-Tool-windows-latest and Bilibili-Live-Tool-ubuntu-latest
-          name: ${{ env.APP_NAME }}-${{ matrix.os }}
+          # We give each artifact a unique name based on the OS
+          name: ${{ matrix.os }}-binaries
           path: dist/${{ env.DISPLAY_NAME }}${{ matrix.extension }}
-          retention-days: 5
+          retention-days: 1
+
+  release:
+    needs: build
+    # Only run this job if a tag was pushed (e.g., v1.0.1)
+    # OR if you want it on every push to master, remove the 'if' line.
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          pattern: "*-binaries"
+          merge-multiple: true
+
+      - name: Display structure of downloaded files
+        run: ls -R ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/${{ env.DISPLAY_NAME }}.exe
+            ./artifacts/${{ env.DISPLAY_NAME }}
+          # Use the tag name as the release name
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true

@@ -66,7 +66,7 @@ class BiliLiveGUI:
         self.partition_cat = None
         self.root = root
         self.root.title("B站推流码获取工具")
-        self.center_window(900, 700)
+        self.center_window(900, 800)
         self.root.resizable(False, False)
         self.root.configure(bg="#f0f0f0")
 
@@ -244,7 +244,7 @@ class BiliLiveGUI:
 
     def show_first_run_info(self):
         """显示首次运行信息"""
-        help_path = os.path.join(my_path, '使用说明.txt')
+        help_path = os.path.join(assets_path, '使用说明.txt')
         if os.path.exists(help_path):
             try:
                 util.open_file(help_path)
