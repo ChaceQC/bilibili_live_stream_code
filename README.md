@@ -4,7 +4,7 @@
 
 ## 声明
 
-**本程序仅用于获取推流地址以及推流码，不会封号等等，任何与账号有关的问题概不负责。**
+**本程序仅用于获取推流地址以及推流码，封号与本程序无关，任何与账号有关的问题概不负责。**
 
 ## 使用教程
 
@@ -39,10 +39,10 @@
 
 1. 本程序作者：[Chace](https://github.com/ChaceQC)。  
 2. 本程序制作特别感谢：[琴子](https://github.com/Truble-Maker)，[Roberta001](https://github.com/Roberta001)。
-3. 感谢贡献者：[DarkModest](https://github.com/DarkModest)，[hxzhao527](https://github.com/hxzhao527)。
+3. 感谢贡献者：[DarkModest](https://github.com/DarkModest)，[hxzhao527](https://github.com/hxzhao527)，[Arcadi4](https://github.com/Arcadi4)，[tifisht](https://github.com/tifisht)。
 
 ### TODO：
-暂无，欢迎提出需求。
+1. 将采用Electron框架+vue+fastAPI重构本项目
 
 ### pyinstaller手动打包
 请在根目录下打包
@@ -74,4 +74,7 @@ pyinstaller --onefile \
 ```
 
 ## 英文版
-1. https://github.com/ChaceQC/bilibili_live_stream_code/blob/main/READM-En.md
+1. [READM-En.md](https://github.com/ChaceQC/bilibili_live_stream_code/blob/main/READM-En.md) -- 很久没更新了...
+
+## 提示
+1. 因本项目将要全面重构，有需求或问题可在 issues 中提，但不再合并PR。
