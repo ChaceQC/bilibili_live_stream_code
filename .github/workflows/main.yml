@@ -61,7 +61,7 @@ jobs:
             --add-data "main/partition.json${{ matrix.sep }}." \
             --add-data "main/使用说明.txt${{ matrix.sep }}." \
             --add-data "main/config.ini${{ matrix.sep }}." \
-            --hidden-import "PIL" \
+            --hidden-import "PIL._tkinter_finder" \
             --name "${{ env.APP_NAME }}" \
             main/bilibili_live_stream_code.py
 
