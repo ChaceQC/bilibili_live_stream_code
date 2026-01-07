@@ -116,8 +116,8 @@ jobs:
           cp ${{ env.DISPLAY_NAME }}.exe Windows
           cp ${{ env.DISPLAY_NAME }} Linux
 
-          zip -r ./Windows-${VERSION}.zip Windows/
-          zip -r ./Linux-${VERSION}.zip Linux/
+          zip -r ./Windows-${VERSION}-x86_64.zip Windows/
+          zip -r ./Linux-${VERSION}-x86_64.zip Linux/
 
       - name: Display structure of downloaded files
         run: ls -R ./artifacts
@@ -126,8 +126,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./artifacts/Windows-${{ env.VERSION }}
-            ./artifacts/Linux-${{ env.VERSION }}
+            ./artifacts/Windows-${{ env.VERSION }}-x86_64.zip
+            ./artifacts/Linux-${{ env.VERSION }}-x86_64.zip
           # Use the tag name as the release name
           name: Release ${{ github.ref_name }}
           draft: false
