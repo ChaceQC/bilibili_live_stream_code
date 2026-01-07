@@ -73,6 +73,13 @@ pyinstaller --onefile \
             main/bilibili_live_stream_code.py
 ```
 
+### Fork后自动打包
+
+```bash
+git tag vx.xx.x
+git push origin vx.xx.x
+```
+
 ## 英文版
 1. [READM-En.md](https://github.com/ChaceQC/bilibili_live_stream_code/blob/main/READM-En.md) -- 很久没更新了...
 
