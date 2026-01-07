@@ -142,28 +142,25 @@ jobs:
                     
                     ### 下载说明
                     
-                    1. **B站推流码获取工具_v${{ github.ref_name }}_多平台.zip** - 包含：
-                      - `B站推流码获取工具_Windows.exe` - Windows 版本
-                      - `B站推流码获取工具_Linux` - Linux 版本
-                      - README.txt - 使用说明
-                    
-                    2. **version.txt** - 版本信息文件
+                    1. **B站推流码获取工具_${{ github.ref_name }}_多平台.zip** - 包含：
+                      - `B站推流码获取工具.exe` - Windows 版本
+                      - `B站推流码获取工具` - Linux 版本
                     
                     ### 使用说明
                     
                     **Windows 用户:**
-                    - 下载后解压，双击 `B站推流码获取工具_Windows.exe` 运行
+                    - 下载后解压，双击 `B站推流码获取工具.exe` 运行
                     
                     **Linux 用户:**
                     - 下载后解压，在终端中执行：
                       ```bash
-                      chmod +x B站推流码获取工具_Linux
-                      ./B站推流码获取工具_Linux
+                      chmod +x B站推流码获取工具
+                      ./B站推流码获取工具
                       ```
                     
                     ### 系统要求
                     - Windows 10/11 或 现代 Linux 发行版
-                    - Python 3.12 运行时（已包含在可执行文件中）
+                    - x86_64的处理器
                     
                     ### 更新日志
                     - 查看提交历史或CHANGELOG文件了解详细更新内容
