@@ -1,0 +1,84 @@
+name: Build Multi-Platform Executables
+
+on:
+  push:
+    branches: [ "better_pack" ]
+  pull_request:
+    branches: [ "better_pack" ]
+  workflow_dispatch:
+
+env:
+  APP_NAME: "Bilibili_Live_Tool"
+  DISPLAY_NAME: "B站推流码获取工具"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # Runs two separate jobs in parallel
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            sep: ";"
+            extension: ".exe"
+          - os: ubuntu-latest
+            sep: ":"
+            extension: ""
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install System Dependencies (Linux Only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk binutils
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        shell: bash # Use bash for cross-platform compatibility in this step
+
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          # Use the matrix separator ( ; for Win, : for Linux )
+          pyinstaller --onefile \
+            --windowed \
+            --icon="main/B站图标.ico" \
+            --add-data "main/B站图标.ico${{ matrix.sep }}." \
+            --add-data "main/partition.json${{ matrix.sep }}." \
+            --add-data "main/使用说明.txt${{ matrix.sep }}." \
+            --add-data "main/config.ini${{ matrix.sep }}." \
+            --name "${{ env.APP_NAME }}" \
+            main/bilibili_live_stream_code.py
+
+      - name: Rename Executable (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Rename-Item -Path "dist/${{ env.APP_NAME }}${{ matrix.extension }}" -NewName "${{ env.DISPLAY_NAME }}${{ matrix.extension }}"
+
+      - name: Rename Executable (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mv "dist/${{ env.APP_NAME }}" "dist/${{ env.DISPLAY_NAME }}"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Creates separate artifacts: Bilibili-Live-Tool-windows-latest and Bilibili-Live-Tool-ubuntu-latest
+          name: ${{ env.APP_NAME }}-${{ matrix.os }}
+          path: dist/${{ env.DISPLAY_NAME }}${{ matrix.extension }}
+          retention-days: 5
