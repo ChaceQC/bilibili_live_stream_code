@@ -3,9 +3,9 @@
 
 作者：Chace
 
-版本：1.0.11
+版本：1.0.12
 
-更新时间：2025-09-11
+更新时间：2026-01-08
 """
 import datetime
 import hashlib
@@ -66,7 +66,7 @@ class BiliLiveGUI:
         self.partition_cat = None
         self.root = root
         self.root.title("B站推流码获取工具")
-        self.center_window(900, 800)
+        self.center_window(900, 700)
         self.root.resizable(False, False)
         self.root.configure(bg="#f0f0f0")
 
