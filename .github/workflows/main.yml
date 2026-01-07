@@ -116,8 +116,8 @@ jobs:
           cp ${{ env.DISPLAY_NAME }}.exe Windows
           cp ${{ env.DISPLAY_NAME }} Linux
 
-          zip -r ./Windows-${VERSION} Windows/
-          zip -r ./Linux-${VERSION} Linux/
+          zip -r ./Windows-${VERSION}.zip Windows/
+          zip -r ./Linux-${VERSION}.zip Linux/
 
       - name: Display structure of downloaded files
         run: ls -R ./artifacts
