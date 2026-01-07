@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  APP_NAME: "Bilibili_Live_Tool" # Use English for internal/artifact naming
+  APP_NAME: "Bilibili_Live_Tool"
   DISPLAY_NAME: "B站推流码获取工具"
 
 jobs:
@@ -34,7 +34,6 @@ jobs:
       - name: Build with PyInstaller
         shell: pwsh
         run: |
-          # We use the env variable for the filename to ensure compatibility
           pyinstaller --onefile `
             --windowed `
             --icon="main/B站图标.ico" `
@@ -45,16 +44,17 @@ jobs:
             --name "${{ env.APP_NAME }}" `
             main/bilibili_live_stream_code.py
 
-      - name: Rename Executable (Optional)
+      - name: Rename Executable
         shell: pwsh
         run: |
-          # If you want the final .exe to have the Chinese name for the user:
-          Rename-Item "dist/${{ env.APP_NAME }}.exe" "dist/${{ env.DISPLAY_NAME }}.exe"
+          # Correct syntax: Rename-Item "path/to/old" "new_name_only"
+          Rename-Item -Path "dist/${{ env.APP_NAME }}.exe" -NewName "${{ env.DISPLAY_NAME }}.exe"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          # IMPORTANT: This name must be ASCII (English/Numbers) to avoid Azure errors
+          # This name is for the ZIP download (Must be English)
           name: Bilibili-Live-Tool-Windows
+          # This path points to the actual .exe with the Chinese name
           path: dist/${{ env.DISPLAY_NAME }}.exe
           retention-days: 5
