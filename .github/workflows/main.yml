@@ -120,27 +120,27 @@ jobs:
           zip -r "./Windows-v${VERSION}" Windows/
           zip -r "./Linux-v${VERSION}" Linux/
 
-          cat > release_files/README.txt << 'EOF_ENCODED'
-哔哩哔哩推流码获取工具
-Bilibili Live Tool - Multi-Platform Release
-===========================================
+          cat > release_files/README.txt << 'EOF'
+          B站推流码获取工具
+          Bilibili Live Tool - Multi-Platform Release
+          ===========================================
 
-该release包含 Windows 与 Linux 两个版本,请按需下载
+          该release包含 Windows 与 Linux 两个版本,请按需下载
 
-1. B站推流码获取工具.exe
-   - Windows 10/11 用户
-   - 双击启动
-   
-2. B站推流码获取工具
-   - For Linux users
-   - 如无法启动,使用前请先赋予权限: chmod +x 文件名
-   
-tips:
-1. 请注意是否下载了对应操作系统版本呢?
+          1. B站推流码获取工具.exe
+            - Windows 10/11 用户
+            - 双击启动
+            
+          2. B站推流码获取工具
+            - For Linux users
+            - 如无法启动,使用前请先赋予权限: chmod +x 文件名
+            
+          tips:
+          1. 请注意是否下载了对应操作系统版本呢?
 
-Release Version: v${VERSION}
-Build日期: $(date '+%Y-%m-%d')
-EOF_ENCODED
+          Release Version: v${VERSION}
+          Build日期: $(date '+%Y-%m-%d')
+          EOF
 
       - name: Display structure of downloaded files
         run: ls -R ./artifacts
