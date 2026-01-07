@@ -44,5 +44,34 @@
 ### TODO：
 暂无，欢迎提出需求。
 
+### pyinstaller手动打包
+请在根目录下打包
+
+Windows：
+```powershell
+pyinstaller --onefile
+            --windowed
+            --icon=main/B站图标.ico
+            --add-data "main/B站图标.ico;./"  
+            --add-data "main/partition.json;./" 
+            --add-data "main/使用说明.txt;./" 
+            --add-data "main/config.ini;./" 
+            --name "B站推流码获取工具" main/bilibili_live_stream_code.py
+```
+
+Linux:
+```bash
+pyinstaller --onefile \
+            --windowed \
+            --icon="main/B站图标.ico" \
+            --add-data "main/B站图标.ico:." \
+            --add-data "main/partition.json:." \
+            --add-data "main/使用说明.txt:." \
+            --add-data "main/config.ini:." \
+            --hidden-import "PIL._tkinter_finder" \
+            --name "B站推流码获取工具" \
+            main/bilibili_live_stream_code.py
+```
+
 ## 英文版
 1. https://github.com/ChaceQC/bilibili_live_stream_code/blob/main/READM-En.md
