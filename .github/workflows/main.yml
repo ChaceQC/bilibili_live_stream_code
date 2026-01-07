@@ -13,6 +13,7 @@ env:
   APP_NAME: "Bilibili_Live_Tool"
   DISPLAY_NAME: "B站推流码获取工具"
   EN_NAME: "Bilibili_Live_Stream_Tool"
+  VERSION: ${{ github.ref_name }}
 
 # Necessary permissions to create a release
 permissions:
@@ -106,8 +107,6 @@ jobs:
 
       - name: Archive by OS
         run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          VERSION="${VERSION#refs/tags/}" 
 
           cd artifacts
 
