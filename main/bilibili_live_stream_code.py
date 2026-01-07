@@ -3,7 +3,7 @@
 
 作者：Chace
 
-版本：1.0.12
+版本：1.0.13
 
 更新时间：2026-01-08
 """
@@ -769,8 +769,9 @@ class BiliLiveGUI:
         else:
             # 更新头像显示
             avatar_url = info_json["data"]["face"]
-            response = requests.get(url=avatar_url, stream=True)
+            response = requests.get(url=avatar_url, stream=True, cookies=cookies, headers=dt.header)
             img_data = response.content
+
             img = Image.open(io.BytesIO(img_data))
             img = img.resize((150, 150))
             self.avatar_image = ImageTk.PhotoImage(img)
