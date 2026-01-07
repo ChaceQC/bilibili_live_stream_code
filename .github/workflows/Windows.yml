@@ -1,0 +1,48 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ "better_pack" ] # Trigger on push to main
+  pull_request:
+    branches: [ "better_pack" ]
+  workflow_dispatch:      # Allows you to run this manually from the Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip' # caching pip dependencies
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          # If you have a requirements.txt, uncomment the line below:
+          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+
+      - name: Build with PyInstaller
+        shell: pwsh
+        run: |
+          pyinstaller --onefile `
+            --windowed `
+            --icon="main/B站图标.ico" `
+            --add-data "main/B站图标.ico;./" `
+            --add-data "main/partition.json;./" `
+            --add-data "main/使用说明.txt;./" `
+            --add-data "main/config.ini;./" `
+            --name "B站推流码获取工具" `
+            main/bilibili_live_stream_code.py
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: B站推流码获取工具-Windows
+          path: dist/B站推流码获取工具.exe
