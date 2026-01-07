@@ -24,6 +24,7 @@ import webbrowser
 import qrcode
 from PIL import ImageTk, Image, ImageDraw
 import pystray
+import shutil
 
 # 导入原始模块
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -39,8 +40,9 @@ cookies_file = 'cookies.txt'
 last_settings_file = 'last_settings.json'
 partition_file = 'partition.json'
 config_file = 'config.ini'
-my_path = os.getcwd()
 now_version = "1.1.7"
+assets_path = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.getcwd()
+my_path = os.getcwd()
 
 
 def appsign(params, appkey, appsec):
@@ -109,9 +111,12 @@ class BiliLiveGUI:
         self.live_code = tk.StringVar()
         self.live_server = tk.StringVar()
         self.avatar_image_label = tk.Label
-        self.avatar_image = ImageTk.PhotoImage(file=os.path.join(my_path, 'B站图标.ico'))
+        self.avatar_image = ImageTk.PhotoImage(file=os.path.join(assets_path, 'B站图标.ico'))
         self.close_to_tray = tk.BooleanVar(value=True)
         self.show_up_info_time = time.time() - 301
+
+        # 创建缺失的数据文件
+        self.repair_missing_files()
 
         # 分区数据
         self.partition_data = {}
@@ -148,7 +153,7 @@ class BiliLiveGUI:
 
         # 应用图标
         try:
-            icon_path = os.path.join(my_path, 'B站图标.ico')
+            icon_path = os.path.join(assets_path, 'B站图标.ico')
             if os.path.exists(icon_path):
                 self.root.iconbitmap(icon_path)
         except:
@@ -188,6 +193,29 @@ class BiliLiveGUI:
         if tab_name == "账号设置" and time.time() - self.show_up_info_time > 300:
             self.show_up_info()
 
+    def repair_missing_files(self):
+        """创建缺失的数据文件,partition and config.ini 不包括cookies.txt"""
+        # partition.json
+        json_path = os.path.join(my_path, partition_file)
+        if not os.path.exists(json_path):
+            try:
+                if hasattr(sys, '_MEIPASS'):
+                    shutil.copy(os.path.join(sys._MEIPASS, partition_file), json_path)
+                else:
+                    messagebox.showerror("错误", "未找到partition.json，请登录后更新！")
+            except Exception as e:
+                messagebox.showerror("错误", "创建partition.json出错！")
+        
+        # config.ini
+        json_path = os.path.join(my_path, config_file)
+        if not os.path.exists(json_path):
+            try:
+                if hasattr(sys, '_MEIPASS'):
+                    shutil.copy(os.path.join(sys._MEIPASS, config_file), json_path)
+                else:
+                    messagebox.showerror("错误", "未找到config.ini，请登录后更新！")
+            except Exception as e:
+                messagebox.showerror("错误", "创建config.ini出错！")
 
     # 初始化和配置相关函数
     def check_first_run(self):
@@ -204,7 +232,15 @@ class BiliLiveGUI:
                         file.write('use_first: 0\n')
                         file.write(second_line)
         else:
-            messagebox.showerror("错误", "未找到config.ini，请尝试重新安装此程序！")
+            # messagebox.showerror("错误", "未找到config.ini，请尝试重新安装此程序！")
+            # 直接新建一个好了，就不要报错了
+            try:
+                with open(config_path, 'w', encoding='utf-8') as file:
+                    file.write('use_first: 0\n')
+                    file.write('close: 1\n')
+                self.show_first_run_info()
+            except:
+                messagebox.showerror("错误", "创建config.ini失败，请检查程序目录是否有写入权限！")
 
     def show_first_run_info(self):
         """显示首次运行信息"""
@@ -537,7 +573,7 @@ class BiliLiveGUI:
         """创建系统托盘图标"""
         # 加载图标
         try:
-            icon_path = os.path.join(my_path, 'B站图标.ico')
+            icon_path = os.path.join(assets_path, 'B站图标.ico')
             if os.path.exists(icon_path):
                 image = Image.open(icon_path)
             else:
