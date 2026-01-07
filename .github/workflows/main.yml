@@ -120,7 +120,7 @@ jobs:
           zip -r "./Windows-v${VERSION}" Windows/
           zip -r "./Linux-v${VERSION}" Linux/
 
-          cat > release_files/README.txt << 'EOF'
+          cat > release_files/README.txt << 'EOF_ENCODED'
 哔哩哔哩推流码获取工具
 Bilibili Live Tool - Multi-Platform Release
 ===========================================
@@ -140,7 +140,7 @@ tips:
 
 Release Version: v${VERSION}
 Build日期: $(date '+%Y-%m-%d')
-EOF
+EOF_ENCODED
 
       - name: Display structure of downloaded files
         run: ls -R ./artifacts
