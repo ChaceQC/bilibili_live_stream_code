@@ -3,9 +3,9 @@
 
 作者：Chace
 
-版本：1.1.1
+版本：1.2.0
 
-更新时间：2025-11-04
+更新时间：2026-01-08
 
 常用函数：
 
@@ -28,6 +28,7 @@ import tkinter
 import tkinter as tk
 from util import center_window
 from PIL import Image, ImageTk
+import threading
 
 def get_qrcode() -> dict:
     """
@@ -147,36 +148,63 @@ def get_room_id_and_csrf(cookies: dict) -> tuple:
 
     return room_id, csrf
 
-def login_enter(windows: tkinter.Tk, qrcode_key: str, c_list: list, login_label: tkinter.Label, is_login: bool) -> None:
-    """
-    获取到登录二维码后，轮序检测是否登录成功
-    :param windows: 回调函数所绑定的窗口
-    :param qrcode_key: 二维码秘钥
-    :param c_list: 存储cookies
-    :param login_label: 登录状态的标签
-    :param is_login: 是否登录成功或失效
-    :return: None
-    """
-    if not is_login:
+
+def login_enter_thread(windows, qrcode_key, c_list, login_label):
+    """网络oi操作采用独立线程"""
+    is_login = False
+    while not is_login:
         try:
+            # 这里的阻塞不会影响 UI 线程
             login_requests = qr_login(qrcode_key)
             login_data = login_requests.json()
-        except Exception:
-            raise ConnectionError("登录连接错误！")
-        else:
             code = login_data["data"]["code"]
 
             if code == 0:
                 c_list[0] = login_requests.cookies.get_dict()
-                windows.destroy()
+                windows.after(0, windows.destroy)
                 is_login = True
             elif code == 86038:
-                login_label.config(text="\n二维码已失效，请重新启动软件")
-                windows.destroy()
+                windows.after(0, lambda: login_label.config(text="二维码已失效"))
+                windows.after(1000, windows.destroy)
                 is_login = True
             elif code == 86090:
-                login_label.config(text="\n二维码已扫描，等待确认")
-        windows.after(1000, login_enter, windows, qrcode_key, c_list, login_label, is_login)
+                windows.after(0, lambda: login_label.config(text="已扫描，等待确认"))
+
+            time.sleep(1.5)  # 子线程里的休眠不会卡顿窗口
+        except Exception as e:
+            print(f"网络异常: {e}")
+            break
+
+# def login_enter(windows: tkinter.Tk, qrcode_key: str, c_list: list, login_label: tkinter.Label, is_login: bool) -> None:
+#     """
+#     获取到登录二维码后，轮序检测是否登录成功
+#     :param windows: 回调函数所绑定的窗口
+#     :param qrcode_key: 二维码秘钥
+#     :param c_list: 存储cookies
+#     :param login_label: 登录状态的标签
+#     :param is_login: 是否登录成功或失效
+#     :return: None
+#     """
+#     if not is_login:
+#         try:
+#             login_requests = qr_login(qrcode_key)
+#             login_data = login_requests.json()
+#         except Exception:
+#             raise ConnectionError("登录连接错误！")
+#         else:
+#             code = login_data["data"]["code"]
+#
+#             if code == 0:
+#                 c_list[0] = login_requests.cookies.get_dict()
+#                 windows.destroy()
+#                 is_login = True
+#             elif code == 86038:
+#                 login_label.config(text="\n二维码已失效，请重新启动软件")
+#                 windows.destroy()
+#                 is_login = True
+#             elif code == 86090:
+#                 login_label.config(text="\n二维码已扫描，等待确认")
+#         windows.after(1000, login_enter, windows, qrcode_key, c_list, login_label, is_login)
 
 
 def login_ui() -> dict | None:
@@ -203,7 +231,8 @@ def login_ui() -> dict | None:
     login_label.pack()
 
     tk.Label(window, image=qr_img, anchor='center').pack()
-    login_enter(window, qr_key, cookies_list, login_label, False)
+    # login_enter(window, qr_key, cookies_list, login_label, False)
+    threading.Thread(target=login_enter_thread, args=(window, qr_key, cookies_list, login_label), daemon=True).start()
 
     # 使窗口避免被遮挡，并且获取焦点
     window.attributes('-topmost', True)
