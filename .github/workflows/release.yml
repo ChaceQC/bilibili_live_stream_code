@@ -3,7 +3,7 @@ name: Release BiliLiveTool
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags like v1.0, v2.0.1, etc.
+      - 'v*'
 
 jobs:
   build:
@@ -16,12 +16,15 @@ jobs:
           - os: ubuntu-latest
             asset_name_suffix: linux-amd64
             pyinstaller_options: ""
+            icon_ext: "png"
           - os: macos-latest
             asset_name_suffix: macos-amd64
-            pyinstaller_options: "--windowed" # Create a .app bundle
+            pyinstaller_options: "--windowed"
+            icon_ext: "icns"
           - os: windows-latest
             asset_name_suffix: windows-amd64
-            pyinstaller_options: "--noconsole" # Hide the console window
+            pyinstaller_options: "--noconsole"
+            icon_ext: "ico"
 
     steps:
     - name: Checkout repository
@@ -47,15 +50,34 @@ jobs:
     - name: Install Backend Dependencies
       run: |
         pip install -r requirements.txt
-        pip install pyinstaller
+        pip install pyinstaller Pillow
+
+    # --- 核心步骤：根据平台转换图标 ---
+    - name: Prepare Platform Icon
+      run: |
+        if [ "${{ matrix.os }}" == "macos-latest" ]; then
+          echo "Converting ICO to ICNS for macOS..."
+          sips -s format png bilibili.ico --out temp_icon.png
+          mkdir bilibili.iconset
+          sips -z 1024 1024 temp_icon.png --out bilibili.iconset/icon_512x512@2x.png
+          iconutil -c icns bilibili.iconset
+          rm -rf bilibili.iconset temp_icon.png
+        elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          echo "Converting ICO to PNG for Linux..."
+          python -c "from PIL import Image; Image.open('bilibili.ico').save('bilibili.png')"
+        fi
+      shell: bash
 
     - name: Package with PyInstaller
       run: |
+        # 确定当前平台应使用的图标文件名
+        ICON_NAME="bilibili.${{ matrix.icon_ext }}"
+        
         pyinstaller main.py \
           --name BiliLiveTool \
           --onefile \
           --add-data "frontend/dist:frontend/dist" \
-          --icon "bilibili.ico" \
+          --icon "$ICON_NAME" \
           ${{ matrix.pyinstaller_options }}
       shell: bash
 
@@ -69,6 +91,7 @@ jobs:
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
           APP_NAME="BiliLiveTool.app"
           ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
+          # macOS 打包整个 .app 文件夹
           7z a -r $ASSET_NAME dist/$APP_NAME
         else # Linux
           EXE_NAME="BiliLiveTool"
@@ -102,23 +125,17 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: artifacts/*/*
-        # 使用中文编写 body
         body: |
           ## 🚀 BiliLiveTool 预发布版本
           
-          这是基于标签 `${{ github.ref_name }}` 自动构建的预发布版本。
+          这是基于标签 `${{ github.ref_name }}` 自动构建的版本。
           
-          ### 📦 下载 (Assets)
-          请根据您的操作系统下载对应的文件：
-          - **Windows**: `.zip` 格式
-          - **macOS**: `.zip` 格式
-          - **Linux**: `.tar.gz` 格式
-
-          ### ⚠️ 注意
-          这是一个 **Pre-release** (预发布) 版本，可能包含未经充分测试的新功能或不稳定性。
-
+          ### 📦 平台支持
+          - **Windows**: 双击 `.exe` 运行
+          - **macOS**: 解压后运行 `.app`
+          - **Linux**: 赋予执行权限后运行
         draft: false
         prerelease: true
-        generate_release_notes: true # 自动在下方追加 GitHub 生成的更新日志
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
