@@ -209,7 +209,7 @@ jobs:
           > 这是因为开源软件未购买昂贵的数字证书，属于正常现象，请放心使用。
 
         draft: false
-        prerelease: false
+        prerelease: true
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
