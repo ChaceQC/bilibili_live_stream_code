@@ -387,7 +387,7 @@ if __name__ == '__main__':
     window_width = 1000
     window_height = 720
     window = webview.create_window(
-        'BiliLive Tool',
+        'B站直播工具',
         url=get_html_path(),
         js_api=api,
         width=window_width,
