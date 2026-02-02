@@ -101,8 +101,23 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: artifacts/*/*
-        body: "Automated release based on tag."
+        # 使用中文编写 body
+        body: |
+          ## 🚀 BiliLiveTool 预发布版本
+          
+          这是基于标签 `${{ github.ref_name }}` 自动构建的预发布版本。
+          
+          ### 📦 下载 (Assets)
+          请根据您的操作系统下载对应的文件：
+          - **Windows**: `.zip` 格式
+          - **macOS**: `.zip` 格式
+          - **Linux**: `.tar.gz` 格式
+
+          ### ⚠️ 注意
+          这是一个 **Pre-release** (预发布) 版本，可能包含未经充分测试的新功能或不稳定性。
+
         draft: false
-        prerelease: false
+        prerelease: true
+        generate_release_notes: true # 自动在下方追加 GitHub 生成的更新日志
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
