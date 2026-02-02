@@ -1,0 +1,110 @@
+name: Release BiliLiveTool
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on tags like v1.0, v2.0.1, etc.
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            asset_name_suffix: linux-amd64
+            pyinstaller_options: ""
+          - os: macos-latest
+            asset_name_suffix: macos-amd64
+            pyinstaller_options: "--windowed" # Create a .app bundle
+          - os: windows-latest
+            asset_name_suffix: windows-amd64.exe
+            pyinstaller_options: "--noconsole" # Hide the console window
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+      shell: bash
+
+    - name: Install Backend Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Package with PyInstaller
+      run: |
+        pyinstaller main.py \
+          --name BiliLiveTool \
+          --onefile \
+          --add-data "frontend/dist:frontend/dist" \
+          ${{ matrix.pyinstaller_options }}
+      shell: bash
+
+    - name: Prepare Artifacts
+      run: |
+        # Determine the executable name based on OS
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          EXE_NAME="BiliLiveTool.exe"
+          ASSET_NAME="BiliLiveTool-windows-amd64.zip"
+          mv dist/$EXE_NAME .
+          7z a $ASSET_NAME $EXE_NAME
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          APP_NAME="BiliLiveTool.app"
+          ASSET_NAME="BiliLiveTool-macos-amd64.zip"
+          # The .app is a directory, so we zip it
+          7z a -r $ASSET_NAME dist/$APP_NAME
+        else # Linux
+          EXE_NAME="BiliLiveTool"
+          ASSET_NAME="BiliLiveTool-linux-amd64.tar.gz"
+          mv dist/$EXE_NAME .
+          tar -czvf $ASSET_NAME $EXE_NAME
+        fi
+        echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: BiliLiveTool-${{ matrix.asset_name_suffix }}
+        path: ${{ env.ASSET_NAME }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create a release
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifacts/*/*
+        body: "Automated release based on tag."
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

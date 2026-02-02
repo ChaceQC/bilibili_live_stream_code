@@ -1,8 +1,32 @@
-/main/cookies.txt
-/main/last_settings.json
-/bilibili_live_stream_code.spec
-/dist/
-/build/
-/main/__pycache__/
-/main/logs/
-/main/BiliLiveGUI.lock
+# --- User Configs ---
+config.json
+last_settings.json
+cookies.txt
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# --- Node.js / Frontend ---
+frontend/node_modules/
+frontend/dist/
+
+# --- PyInstaller ---
+build/
+dist/
+*.spec
+BiliLiveGUI.lock
+
+# --- IDEs ---
+.idea/
+.vscode/
+
+# --- OS generated files ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+logs/
+*.log
