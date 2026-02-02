@@ -55,6 +55,7 @@ jobs:
           --name BiliLiveTool \
           --onefile \
           --add-data "frontend/dist:frontend/dist" \
+          --icon "bilibili.ico" \
           ${{ matrix.pyinstaller_options }}
       shell: bash
 
