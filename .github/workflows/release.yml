@@ -20,12 +20,12 @@ jobs:
             asset_name_suffix: macos-amd64
             pyinstaller_options: "--windowed" # Create a .app bundle
           - os: windows-latest
-            asset_name_suffix: windows-amd64.exe
+            asset_name_suffix: windows-amd64
             pyinstaller_options: "--noconsole" # Hide the console window
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -33,7 +33,7 @@ jobs:
         python-version: '3.9'
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
 
@@ -60,20 +60,18 @@ jobs:
 
     - name: Prepare Artifacts
       run: |
-        # Determine the executable name based on OS
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
           EXE_NAME="BiliLiveTool.exe"
-          ASSET_NAME="BiliLiveTool-windows-amd64.zip"
+          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
           mv dist/$EXE_NAME .
           7z a $ASSET_NAME $EXE_NAME
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
           APP_NAME="BiliLiveTool.app"
-          ASSET_NAME="BiliLiveTool-macos-amd64.zip"
-          # The .app is a directory, so we zip it
+          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
           7z a -r $ASSET_NAME dist/$APP_NAME
         else # Linux
           EXE_NAME="BiliLiveTool"
-          ASSET_NAME="BiliLiveTool-linux-amd64.tar.gz"
+          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.tar.gz"
           mv dist/$EXE_NAME .
           tar -czvf $ASSET_NAME $EXE_NAME
         fi
@@ -81,7 +79,7 @@ jobs:
       shell: bash
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: BiliLiveTool-${{ matrix.asset_name_suffix }}
         path: ${{ env.ASSET_NAME }}
@@ -91,11 +89,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to create a release
+      contents: write
 
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: artifacts
 
