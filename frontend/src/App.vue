@@ -9,7 +9,7 @@ import MessageModal from '@/components/MessageModal.vue';
 import UserAccountModal from '@/components/UserAccountModal.vue';
 import WindowControls from '@/components/WindowControls.vue';
 
-const { loadSavedConfig, getWindowPosition, windowDrag } = useBridge();
+const { loadSavedConfig, getWindowPosition, windowDrag, refreshCurrentUser } = useBridge();
 const activeTab = ref('account');
 const isInitializing = ref(true);
 
@@ -22,6 +22,25 @@ const showModal = (title, content, type = 'info') => { modalState.title = title;
 provide('showModal', showModal);
 
 const showAccountManager = ref(false);
+
+// 刷新冷却逻辑
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 5 * 60 * 1000; // 5分钟
+
+const tryRefreshUserInfo = async (force = false) => {
+  const now = Date.now();
+  if (!force && now - lastRefreshTime < REFRESH_COOLDOWN) return;
+
+  try {
+    const updatedUser = await refreshCurrentUser();
+    if (updatedUser) {
+      fillUserState(updatedUser);
+      lastRefreshTime = now;
+    }
+  } catch (e) {
+    console.error('Refresh failed:', e);
+  }
+};
 
 // --- [终极优化] 指针捕获拖拽逻辑 ---
 const initialDragState = ref({
@@ -70,7 +89,11 @@ const handlePointerUp = (event) => {
 onMounted(async () => {
   try {
     const user = await loadSavedConfig();
-    if (user && user.uid) fillUserState(user);
+    if (user && user.uid) {
+      fillUserState(user);
+      // 启动应用时尝试更新
+      await tryRefreshUserInfo();
+    }
   } catch (e) { console.error(e); } finally { isInitializing.value = false; }
 });
 
@@ -81,10 +104,25 @@ const fillUserState = (user) => {
   activeTab.value = 'stream';
 };
 
-const onLoginSuccess = (data) => fillUserState(data);
-const onSwitchAccount = (data) => { fillUserState(data); showModal('提示', `已切换: ${data.uname}`, 'success'); };
+const onLoginSuccess = (data) => {
+  fillUserState(data);
+  lastRefreshTime = Date.now(); // 登录成功视为已刷新
+};
+
+const onSwitchAccount = (data) => {
+  fillUserState(data);
+  showModal('提示', `已切换: ${data.uname}`, 'success');
+  lastRefreshTime = 0; // 切换账号后重置冷却，允许立即刷新一次
+  tryRefreshUserInfo();
+};
+
 const onLogout = () => { Object.assign(userInfo, { isLoggedIn: false }); globalForm.roomId = ''; globalForm.cookie = ''; globalForm.csrf = ''; activeTab.value = 'account'; showModal('提示', '已退出登录', 'info'); };
 const updateForm = (key, value) => { globalForm[key] = value; };
+
+const handleSidebarAccountClick = () => {
+  showAccountManager.value = true;
+  tryRefreshUserInfo();
+};
 </script>
 
 <template>
@@ -106,7 +144,7 @@ const updateForm = (key, value) => { globalForm[key] = value; };
         :active-tab="activeTab"
         :user="userInfo"
         @change="t => activeTab = t"
-        @show-account-manager="showAccountManager = true"
+        @show-account-manager="handleSidebarAccountClick"
       />
       <main class="content">
         <KeepAlive>
