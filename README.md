@@ -85,3 +85,5 @@ git push origin vx.xx.x
 
 ## 提示
 1. 因本项目将要全面重构，有需求或问题可在 issues 中提，但不再合并PR。
+2. 目前已完成部分重构可前往 [v2.0.0](https://github.com/ChaceQC/bilibili_live_stream_code/releases/tag/v2.0.0) 查看。
+3. 欢迎针对重构后的项目进行测试和提出 issue。
