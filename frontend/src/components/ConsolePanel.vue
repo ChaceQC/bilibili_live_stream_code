@@ -15,13 +15,12 @@ const copyToClipboard = async (text, type) => {
     await navigator.clipboard.writeText(text);
     // 设置成功状态
     copyStatus.value[type] = true;
-    // 2秒后恢复
+    // 1秒后恢复 (缩短时间)
     setTimeout(() => {
       copyStatus.value[type] = false;
-    }, 2000);
+    }, 1000);
   } catch (err) {
     console.error('复制失败', err);
-    alert('复制失败，请手动复制');
   }
 };
 </script>
@@ -36,7 +35,7 @@ const copyToClipboard = async (text, type) => {
         <div class="input-row">
           <input type="text" readonly :value="liveState.addr" class="gemini-input readonly">
           <button class="btn btn-secondary btn-sm" @click="copyToClipboard(liveState.addr, 'addr')">
-            {{ copyStatus['addr'] ? '已复制' : '复制' }}
+            <span class="btn-content">{{ copyStatus['addr'] ? '已复制' : '复制' }}</span>
           </button>
         </div>
       </div>
@@ -46,7 +45,7 @@ const copyToClipboard = async (text, type) => {
         <div class="input-row">
           <input type="password" readonly :value="liveState.code" class="gemini-input readonly">
           <button class="btn btn-secondary btn-sm" @click="copyToClipboard(liveState.code, 'code')">
-            {{ copyStatus['code'] ? '已复制' : '复制' }}
+            <span class="btn-content">{{ copyStatus['code'] ? '已复制' : '复制' }}</span>
           </button>
         </div>
       </div>
@@ -57,7 +56,7 @@ const copyToClipboard = async (text, type) => {
     </div>
 
     <div class="logs">
-      <div v-for="(l,i) in state.logs" :key="i">{{ l }}</div>
+      <div v-for="(l,i) in state.logs" :key="i" class="log-item">{{ l }}</div>
     </div>
   </div>
 </template>
@@ -68,16 +67,29 @@ const copyToClipboard = async (text, type) => {
 .field-group:last-child { margin-bottom: 0; }
 .label { font-size: 12px; color: #0B57D0; margin-bottom: 6px; font-weight: 600; }
 
-.input-row { display: flex; gap: 8px; }
+.input-row { display: flex; gap: 8px; align-items: center; }
 .gemini-input.readonly {
   background: white;
   color: #555;
   border: 1px solid #d0d7de;
   cursor: text;
   font-family: monospace;
+  flex: 1;
 }
 
-.btn-sm { padding: 8px 16px; min-width: 70px; }
+.btn-sm {
+  padding: 0 12px;
+  height: 38px;
+  min-width: 80px; /* 固定最小宽度，防止文字切换时抖动 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-content {
+  white-space: nowrap; /* 强制不换行 */
+}
 
 .logs {
   background: #1E1E1E; color: #81C995;
@@ -85,5 +97,17 @@ const copyToClipboard = async (text, type) => {
   height: 300px; overflow-y: auto;
   font-family: monospace; font-size: 12px;
   margin-top: 20px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.log-item {
+  margin-bottom: 4px;
+  line-height: 1.4;
+  border-left: 2px solid transparent;
+  padding-left: 8px;
+}
+.log-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-left-color: #81C995;
 }
 </style>

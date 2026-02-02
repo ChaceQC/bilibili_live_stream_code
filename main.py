@@ -31,6 +31,7 @@ class Api:
         self.api = BilibiliApi()
         self.partition_map = {}
         self.current_area_id = None
+        self.current_area_names = []
         self.is_maximized = False
         self.config = self._load_config()
         self.room_id = ""
@@ -76,6 +77,7 @@ class Api:
         self.room_id = ""
         self.csrf = ""
         self.current_area_id = None
+        self.current_area_names = []
 
     # --- 配置管理 ---
     def _load_config(self):
@@ -125,17 +127,19 @@ class Api:
             self.room_id = user.get("roomId", "")
             self.csrf = user.get("csrf", "")
             self.current_area_id = user.get("last_area_id")
+            self.current_area_names = user.get("last_area_name", [])
         else:
             self._clear_session_state()
 
     def _save_user_data(self, uid, full_data, cookie_str, room_id, csrf):
+        uid = str(uid)
         if "users" not in self.config: self.config["users"] = {}
         old_data = self.config["users"].get(uid, {})
         level_info = full_data.get("level_info", {})
         wallet = full_data.get("wallet", {})
         stat = full_data.get("stat", {})
         new_data = {
-            "uid": str(uid), "uname": full_data.get("uname", "未知用户"), "face": full_data.get("face", ""),
+            "uid": uid, "uname": full_data.get("uname", "未知用户"), "face": full_data.get("face", ""),
             "cookie": cookie_str, "roomId": str(room_id), "csrf": csrf,
             "level": level_info.get("current_level", 0), "current_exp": level_info.get("current_exp", 0),
             "next_exp": level_info.get("next_exp", 0), "money": full_data.get("money", 0),
@@ -150,6 +154,7 @@ class Api:
         self.room_id = str(room_id)
         self.csrf = csrf
         self.current_area_id = new_data["last_area_id"]
+        self.current_area_names = new_data["last_area_name"]
         return new_data
 
     # --- 辅助逻辑 ---
@@ -176,12 +181,37 @@ class Api:
         full['stat'] = stat_data
         return True, full
 
+    def _get_names_by_id(self, area_id):
+        """根据 area_id 反查分区名称 [parent_name, sub_name]"""
+        if not self.partition_map:
+            self._refresh_partitions_internal()
+        
+        target_id = str(area_id)
+        for p_name, sub_map in self.partition_map.items():
+            for s_name, aid in sub_map.items():
+                if str(aid) == target_id:
+                    return [p_name, s_name]
+        return []
+
     # --- 前端 API 接口 ---
     def load_saved_config(self):
         uid = self.config.get("current_uid")
         users = self.config.get("users", {})
         if uid and uid in users: return {"code": 0, "data": users[uid]}
         return {"code": 0, "data": {}}
+
+    def refresh_current_user(self):
+        """刷新当前登录账号的信息"""
+        uid = self.config.get("current_uid")
+        if not uid or uid not in self.config.get("users", {}):
+            return {"code": -1, "msg": "未登录"}
+
+        ok, full_data = self._fetch_full_user_data()
+        if ok:
+            user = self.config["users"][uid]
+            saved_user = self._save_user_data(uid, full_data, user['cookie'], user['roomId'], user['csrf'])
+            return {"code": 0, "data": saved_user}
+        return {"code": -1, "msg": "刷新失败"}
 
     def get_account_list(self):
         users = self.config.get("users", {})
@@ -244,10 +274,14 @@ class Api:
                 p_name = p['name']
                 self.partition_map[p_name] = {}
                 for s in p['list']: self.partition_map[p_name][s['name']] = s['id']
+            
+            # 刷新后，尝试恢复当前用户的 last_area_id
             uid = self.config.get("current_uid")
             if uid:
-                last_aid = self.config["users"][uid].get("last_area_id")
-                if last_aid: self.current_area_id = last_aid
+                uid = str(uid)
+                if uid in self.config["users"]:
+                    last_aid = self.config["users"][uid].get("last_area_id")
+                    if last_aid: self.current_area_id = last_aid
 
     def get_partitions(self):
         if not self.partition_map: self._refresh_partitions_internal()
@@ -258,9 +292,12 @@ class Api:
         if not self.config.get("current_uid"): return {"code": -1, "msg": "未登录"}
         success, res = self.api.update_title(self.room_id, title, self.csrf)
         if success and res['code'] == 0:
-            uid = self.config["current_uid"]
-            self.config["users"][uid]["last_title"] = title
-            self._save_config()
+            uid = self.config.get("current_uid")
+            if uid:
+                uid = str(uid)
+                if uid in self.config["users"]:
+                    self.config["users"][uid]["last_title"] = title
+                    self._save_config()
             return {"code": 0}
         return {"code": -1, "msg": res.get('msg')}
 
@@ -271,23 +308,67 @@ class Api:
         if not aid: return {"code": -1, "msg": "无效分区"}
         success, res = self.api.update_area(self.room_id, aid, self.csrf)
         if success and res['code'] == 0:
-            uid = self.config["current_uid"]
             self.current_area_id = aid
-            self.config["users"][uid]["last_area_id"] = aid
-            self.config["users"][uid]["last_area_name"] = [p_name, s_name]
-            self._save_config()
+            self.current_area_names = [p_name, s_name]
+            uid = self.config.get("current_uid")
+            if uid:
+                uid = str(uid)
+                if uid in self.config["users"]:
+                    self.config["users"][uid]["last_area_id"] = aid
+                    self.config["users"][uid]["last_area_name"] = [p_name, s_name]
+                    self._save_config()
             return {"code": 0}
         return {"code": -1, "msg": res.get('msg')}
 
-    def start_live(self):
+    def start_live(self, p_name=None, s_name=None):
         if not self.room_id: return {"code": -1, "msg": "请先登录"}
+
+        # 如果前端传了分区名，先更新内存中的 ID
+        if p_name and s_name:
+            if not self.partition_map: self._refresh_partitions_internal()
+            aid = self.partition_map.get(p_name, {}).get(s_name)
+            
+            # 如果没找到，尝试强制刷新一次
+            if not aid:
+                self._refresh_partitions_internal()
+                aid = self.partition_map.get(p_name, {}).get(s_name)
+            
+            if aid:
+                self.current_area_id = aid
+                self.current_area_names = [p_name, s_name]
+            else:
+                return {"code": -1, "msg": f"无法识别分区: {p_name}-{s_name}"}
+
         if not self.current_area_id:
             uid = self.config.get("current_uid")
-            if uid: self.current_area_id = self.config["users"][uid].get("last_area_id", "235")
+            if uid:
+                uid = str(uid)
+                if uid in self.config["users"]:
+                    self.current_area_id = self.config["users"][uid].get("last_area_id", "235")
+                    # 尝试恢复 names，保持一致性
+                    self.current_area_names = self.config["users"][uid].get("last_area_name", [])
+                else:
+                    self.current_area_id = "235"
             else: self.current_area_id = "235"
+
         success, res = self.api.start_live(self.room_id, self.current_area_id, self.csrf)
         if success:
-            if res['code'] == 0: return {"code": 0, "data": res['data']['rtmp']}
+            if res['code'] == 0:
+                # 成功开启直播后，强制反查一次分区名称，确保数据一致性
+                # 这样即使前端没传名字，或者内存中名字丢失，也能补全
+                if self.current_area_id:
+                    found_names = self._get_names_by_id(self.current_area_id)
+                    if found_names:
+                        self.current_area_names = found_names
+
+                uid = self.config.get("current_uid")
+                if uid:
+                    uid = str(uid)
+                    if uid in self.config["users"]:
+                        self.config["users"][uid]["last_area_id"] = self.current_area_id
+                        self.config["users"][uid]["last_area_name"] = self.current_area_names
+                        self._save_config()
+                return {"code": 0, "data": res['data']['rtmp']}
             elif res['code'] == 60024: return {"code": 60024, "qr": res['data']['qr']}
             return {"code": -1, "msg": res.get('msg')}
         return {"code": -1, "msg": "网络错误"}

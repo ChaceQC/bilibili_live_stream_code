@@ -51,6 +51,12 @@ export const useBridge = () => {
       return res.code === 0 ? res.data : {};
     },
 
+    // 刷新当前用户信息
+    async refreshCurrentUser() {
+      const res = await callPy('refresh_current_user');
+      return res.code === 0 ? res.data : null;
+    },
+
     // 扫码登录
     async getLoginQrcode() {
       const res = await callPy('get_login_qrcode');
@@ -96,10 +102,11 @@ export const useBridge = () => {
       }
     },
 
-    async toggleLive(isStarting) {
+    async toggleLive(isStarting, p_name, s_name) {
       if (isStarting) {
         log('正在获取推流码...');
-        const res = await callPy('start_live');
+        // 传递分区参数给后端
+        const res = await callPy('start_live', p_name, s_name);
         if (res.code === 0) {
           log('获取成功，已开播！');
           return { success: true, data: res.data };
