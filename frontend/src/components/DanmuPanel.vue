@@ -2,10 +2,12 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useBridge } from '@/api/bridge';
 
-const { startDanmuMonitor, stopDanmuMonitor } = useBridge();
+const { startDanmuMonitor, stopDanmuMonitor, sendDanmu } = useBridge();
 const messages = ref([]);
 const messageListRef = ref(null);
 const isAutoScroll = ref(true);
+const inputMsg = ref('');
+const sending = ref(false);
 
 const addMessage = (data) => {
   messages.value.push(data);
@@ -34,6 +36,38 @@ const handleScroll = () => {
   const { scrollTop, scrollHeight, clientHeight } = messageListRef.value;
   // 如果距离底部小于 50px，则认为是自动滚动状态
   isAutoScroll.value = scrollHeight - scrollTop - clientHeight < 50;
+};
+
+const handleSend = async () => {
+  const msg = inputMsg.value.trim();
+  if (!msg) return;
+
+  sending.value = true;
+  try {
+    const res = await sendDanmu(msg);
+    if (res.code === 0) {
+      inputMsg.value = '';
+      // 发送成功，等待弹幕服务器推送回显，或者可以在这里手动添加一条本地回显
+    } else {
+      // 简单的错误提示，实际项目中可以使用 Toast 组件
+      console.error(res.msg);
+      // 也可以添加到系统消息中显示
+      addMessage({
+        type: 'interact',
+        uname: '系统提示',
+        msg: `发送失败: ${res.msg}`
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    addMessage({
+        type: 'interact',
+        uname: '系统提示',
+        msg: `发送出错: ${e}`
+      });
+  } finally {
+    sending.value = false;
+  }
 };
 
 onMounted(() => {
@@ -93,6 +127,20 @@ onUnmounted(() => {
 
         </div>
       </TransitionGroup>
+    </div>
+
+    <!-- 发送区域 -->
+    <div class="send-area">
+      <input
+        type="text"
+        v-model="inputMsg"
+        @keyup.enter="handleSend"
+        placeholder="发送弹幕..."
+        :disabled="sending"
+      />
+      <button @click="handleSend" :disabled="sending || !inputMsg.trim()">
+        {{ sending ? '...' : '发送' }}
+      </button>
     </div>
   </div>
 </template>
@@ -253,6 +301,55 @@ onUnmounted(() => {
   font-weight: bold;
   color: inherit;
   margin: 0 4px;
+}
+
+/* === 发送区域样式 === */
+.send-area {
+  padding: 12px 16px;
+  background: #f9f9f9;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.send-area input {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.send-area input:focus {
+  border-color: #00aeec;
+  box-shadow: 0 0 0 2px rgba(0, 174, 236, 0.1);
+}
+
+.send-area button {
+  padding: 8px 20px;
+  background: #00aeec;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.send-area button:hover:not(:disabled) {
+  background: #00a1d6;
+}
+
+.send-area button:disabled {
+  background: #e0e0e0;
+  color: #aaa;
+  cursor: not-allowed;
 }
 
 /* === 动画效果 === */

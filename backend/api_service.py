@@ -102,3 +102,7 @@ class ApiService:
     def stop_danmu_monitor(self):
         asyncio.run_coroutine_threadsafe(self.danmu_service.stop(), self.loop)
         return {"code": 0}
+
+    def send_danmu(self, msg):
+        """发送弹幕"""
+        return self.danmu_service.send_danmu(msg)
