@@ -2,7 +2,9 @@ import hashlib
 import urllib.parse
 import requests
 import logging
+import json
 from backend import data as dt
+from backend import util
 
 # 配置模块日志
 logger = logging.getLogger("BiliAPI")
@@ -29,9 +31,32 @@ class BilibiliApi:
         params.update({'sign': sign})
         return params
 
+    def _mask_data(self, data):
+        """递归脱敏数据"""
+        if isinstance(data, dict):
+            new_data = {}
+            for k, v in data.items():
+                # 增加 live_key, sub_session_key 等字段
+                if k in ['rtmp', 'addr', 'code', 'key', 'token', 'csrf', 'csrf_token', 'access_key', 'live_key', 'sub_session_key']:
+                    if isinstance(v, str):
+                        new_data[k] = util.mask_string(v, 4, 4)
+                    elif isinstance(v, dict):
+                        new_data[k] = self._mask_data(v)
+                    else:
+                        new_data[k] = v
+                elif isinstance(v, (dict, list)):
+                    new_data[k] = self._mask_data(v)
+                else:
+                    new_data[k] = v
+            return new_data
+        elif isinstance(data, list):
+            return [self._mask_data(item) for item in data]
+        return data
+
     def _req(self, method, url, params=None, data=None):
         """通用请求封装"""
         try:
+            logger.debug(f"API Request: {method} {url}")
             if method == "GET":
                 resp = requests.get(url, params=params, cookies=self.cookies, headers=self.headers, timeout=10)
             else:
@@ -41,6 +66,22 @@ class BilibiliApi:
             # 尝试解析 JSON
             try:
                 json_data = resp.json()
+                code = json_data.get("code", "N/A")
+                msg = json_data.get("msg") or json_data.get("message", "")
+                
+                # 记录部分脱敏后的 data 信息
+                resp_data = json_data.get("data")
+                masked_data = "None"
+                if resp_data:
+                    # 简单截取或脱敏，避免日志过大
+                    try:
+                        masked_data = json.dumps(self._mask_data(resp_data), ensure_ascii=False)
+                        if len(masked_data) > 200:
+                            masked_data = masked_data[:200] + "..."
+                    except:
+                        masked_data = "Parse Error"
+
+                logger.debug(f"API Response: {url} -> code={code}, msg={msg}, data={masked_data}")
                 return True, json_data
             except ValueError:
                 logger.error(f"JSON Decode Error. Status: {resp.status_code}, Content: {resp.text[:100]}")
@@ -58,9 +99,24 @@ class BilibiliApi:
         try:
             url = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
             params = {"qrcode_key": qrcode_key}
+            logger.debug(f"API Request: GET {url}")
             resp = requests.get(url, params=params, headers=self.headers, timeout=10)
-            return True, resp.json(), resp.cookies.get_dict()
+            json_data = resp.json()
+            code = json_data.get("data", {}).get("code", "N/A")
+            
+            # 记录脱敏后的响应
+            resp_data = json_data.get("data")
+            masked_data = "None"
+            if resp_data:
+                 try:
+                    masked_data = json.dumps(self._mask_data(resp_data), ensure_ascii=False)
+                 except:
+                    masked_data = "Parse Error"
+
+            logger.debug(f"API Response: {url} -> code={code}, data={masked_data}")
+            return True, json_data, resp.cookies.get_dict()
         except Exception as e:
+            logger.error(f"Request Error: {url} -> {e}")
             return False, {"code": -1, "msg": str(e)}, {}
 
     # --- 用户信息 ---
