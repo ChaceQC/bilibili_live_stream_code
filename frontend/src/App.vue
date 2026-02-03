@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar.vue';
 import AccountPanel from '@/components/AccountPanel.vue';
 import StreamPanel from '@/components/StreamPanel.vue';
 import ConsolePanel from '@/components/ConsolePanel.vue';
+import DanmuPanel from '@/components/DanmuPanel.vue';
 import MessageModal from '@/components/MessageModal.vue';
 import UserAccountModal from '@/components/UserAccountModal.vue';
 import WindowControls from '@/components/WindowControls.vue';
@@ -149,7 +150,7 @@ const handleSidebarAccountClick = () => {
       <main class="content">
         <KeepAlive>
           <component
-            :is="activeTab === 'account' ? AccountPanel : activeTab === 'stream' ? StreamPanel : ConsolePanel"
+            :is="activeTab === 'account' ? AccountPanel : activeTab === 'stream' ? StreamPanel : activeTab === 'console' ? ConsolePanel : DanmuPanel"
             :current-user="userInfo"
             :form-data="globalForm"
             :live-state="liveState"
