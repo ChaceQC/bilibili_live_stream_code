@@ -3,8 +3,21 @@ import { reactive } from 'vue';
 const state = reactive({ logs: [] });
 
 const log = (msg) => {
+  // 如果 msg 是对象，尝试转字符串，避免 [object Object]
+  if (typeof msg === 'object') {
+    try {
+      msg = JSON.stringify(msg);
+    } catch (e) {
+      msg = String(msg);
+    }
+  }
   const time = new Date().toLocaleTimeString();
   state.logs.unshift(`[${time}] ${msg}`);
+};
+
+// 暴露给后端调用
+window.onBackendLog = (msg) => {
+  log(msg);
 };
 
 // 等待 pywebview 就绪的 Promise
@@ -154,6 +167,14 @@ export const useBridge = () => {
         return res.is_maximized;
       }
       else if (action === 'close') await callPy('window_close');
+    },
+
+    // 弹幕监控接口
+    async startDanmuMonitor() {
+      return await callPy('start_danmu_monitor');
+    },
+    async stopDanmuMonitor() {
+      return await callPy('stop_danmu_monitor');
     }
   };
 };

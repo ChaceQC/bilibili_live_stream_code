@@ -57,10 +57,16 @@ class BilibiliApi:
         """通用请求封装"""
         try:
             logger.debug(f"API Request: {method} {url}")
+            
+            # 确保 buvid3 在 cookies 中
+            req_cookies = self.cookies.copy()
+            if 'buvid3' not in req_cookies and 'buvid3' in self.cookies:
+                 req_cookies['buvid3'] = self.cookies['buvid3']
+
             if method == "GET":
-                resp = requests.get(url, params=params, cookies=self.cookies, headers=self.headers, timeout=10)
+                resp = requests.get(url, params=params, cookies=req_cookies, headers=self.headers, timeout=10)
             else:
-                resp = requests.post(url, params=params, data=data, cookies=self.cookies, headers=self.headers,
+                resp = requests.post(url, params=params, data=data, cookies=req_cookies, headers=self.headers,
                                      timeout=10)
 
             # 尝试解析 JSON
@@ -168,3 +174,11 @@ class BilibiliApi:
     def stop_live(self, room_id, csrf):
         data = {'room_id': room_id, 'platform': 'pc_link', 'csrf_token': csrf, 'csrf': csrf}
         return self._req("POST", "https://api.live.bilibili.com/room/v1/Room/stopLive", data=data)
+
+    # --- buvid3 获取 ---
+    def get_buvid3(self):
+        """获取 buvid3"""
+        success, res = self._req("GET", "https://api.bilibili.com/x/frontend/finger/spi")
+        if success and res['code'] == 0:
+            return res['data']['b_3']
+        return None

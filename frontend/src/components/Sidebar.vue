@@ -10,9 +10,9 @@ const defaultFace = 'https://static.hdslb.com/images/member/noface.gif';
     <div class="logo">📺 B站直播工具</div>
 
     <nav class="nav-menu">
-      <div v-for="t in ['account','stream','console']" :key="t"
+      <div v-for="t in ['account','stream','console', 'danmu']" :key="t"
            class="item" :class="{active: activeTab===t}" @click="$emit('change', t)">
-        {{ t==='account'?'账号': t==='stream'?'直播':'控制台' }}
+        {{ t==='account'?'账号': t==='stream'?'直播': t==='console'?'控制台':'弹幕' }}
       </div>
     </nav>
 

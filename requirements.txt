@@ -1,3 +1,6 @@
 pywebview
 requests
 pyinstaller
+protobuf
+brotlipy
+aiohttp
