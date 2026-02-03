@@ -3,8 +3,10 @@ import urllib.parse
 import requests
 import logging
 import json
+import time
 from backend import data as dt
 from backend import util
+from backend.get_wbi import get_w_rid_and_wts
 
 # 配置模块日志
 logger = logging.getLogger("BiliAPI")
@@ -174,6 +176,24 @@ class BilibiliApi:
     def stop_live(self, room_id, csrf):
         data = {'room_id': room_id, 'platform': 'pc_link', 'csrf_token': csrf, 'csrf': csrf}
         return self._req("POST", "https://api.live.bilibili.com/room/v1/Room/stopLive", data=data)
+
+    # --- 弹幕发送 ---
+    def send_danmu(self, room_id, msg, csrf):
+        """发送弹幕"""
+        # 1. 获取 Wbi 签名参数
+        _, query = get_w_rid_and_wts(other_data_dict={"web_location": 444.8})
+        
+        # 2. 准备数据
+        data = dt.bullet_data.copy()
+        data["msg"] = msg
+        data["csrf_token"] = csrf
+        data["csrf"] = csrf
+        data["roomid"] = int(room_id)
+        data["rnd"] = int(time.time())
+        
+        url = f"https://api.live.bilibili.com/msg/send?{query}"
+        
+        return self._req("POST", url, data=data)
 
     # --- buvid3 获取 ---
     def get_buvid3(self):

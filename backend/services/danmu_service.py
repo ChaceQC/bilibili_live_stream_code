@@ -41,6 +41,37 @@ class DanmuService:
             return "***"
         return s[:visible_start] + "***" + s[-visible_end:]
 
+    def send_danmu(self, msg):
+        """发送弹幕 (同步方法)"""
+        room_id = self.state.room_id
+        if not room_id:
+            return {"code": -1, "msg": "未获取到房间ID"}
+            
+        csrf = self.api.cookies.get('bili_jct')
+        if not csrf:
+             return {"code": -1, "msg": "未获取到 CSRF Token"}
+
+        success, res = self.api.send_danmu(room_id, msg, csrf)
+        if success:
+             # 处理特定的错误码
+             code = res.get('code')
+             msg_text = res.get('msg', '未知错误')
+             
+             if code == 1003212:
+                 msg_text = "超出限制长度"
+             elif code == 0:
+                 msg_text = "发送成功"
+             elif code == -101:
+                 msg_text = "未登录"
+             elif code == -400:
+                 msg_text = "参数错误"
+             elif code == 10031:
+                 msg_text = "发送频率过高"
+             
+             return {"code": code, "msg": msg_text}
+        else:
+             return {"code": -1, "msg": "网络请求失败"}
+
     async def get_danmu_info(self, room_id):
         """获取弹幕服务器信息"""
         try:
@@ -94,7 +125,7 @@ class DanmuService:
              success, res = self.api.get_user_info()
              if success and res['code'] == 0 and res['data']['isLogin']:
                  self.state.uid = res['data']['mid']
-                 self._log(f"Fetched uid: {self.state.uid}")
+                 self._log(f"Fetched uid: {self._mask_string(str(self.state.uid), 2, 2)}")
              else:
                  self.state.uid = 0
                  self._log("User not logged in, using uid=0")

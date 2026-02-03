@@ -5,3 +5,11 @@ header = {
     'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'user-agent': user_agent
 }
+
+# 发送弹幕数据模板
+bullet_data = {
+    "color": 16777215,  # 颜色
+    "fontsize": 25,     # 字体大小
+    "mode": 1,          # 弹幕模式 (1: 滚动)
+    "bubble": 0,
+}

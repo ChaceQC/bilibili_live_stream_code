@@ -175,6 +175,12 @@ export const useBridge = () => {
     },
     async stopDanmuMonitor() {
       return await callPy('stop_danmu_monitor');
+    },
+    
+    // 发送弹幕
+    async sendDanmu(msg) {
+      const res = await callPy('send_danmu', msg);
+      return res;
     }
   };
 };
