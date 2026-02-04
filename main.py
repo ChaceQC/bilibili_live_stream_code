@@ -50,7 +50,7 @@ if __name__ == '__main__':
         height=window_height,
         frameless=True,
         easy_drag=False,
-        hidden=True
+        # hidden=True
     )
     def center_and_show_window(window):
         primary_screen = webview.screens[0]
