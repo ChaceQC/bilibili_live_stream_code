@@ -23,6 +23,7 @@ class DanmuService:
         self.receive_task = None
         self.message_callback = None
         self.log_callback = None
+        self.session = None
 
     def set_callback(self, callback):
         self.message_callback = callback
@@ -147,8 +148,8 @@ class DanmuService:
             # if buvid3:
             #     headers['Cookie'] = f'buvid3={buvid3}'
 
-            session = aiohttp.ClientSession()
-            self.ws = await session.ws_connect(ws_url, headers=self.api.headers, )
+            self.session = aiohttp.ClientSession()
+            self.ws = await self.session.ws_connect(ws_url, headers=self.api.headers, )
             
             # 发送认证包
             auth_data = {
@@ -170,6 +171,9 @@ class DanmuService:
         except Exception as e:
             logger.error(f"Failed to connect to danmu server: {e}")
             self.running = False
+            if self.session:
+                await self.session.close()
+                self.session = None
             return False
 
     async def stop(self):
@@ -177,6 +181,9 @@ class DanmuService:
         self.running = False
         if self.ws:
             await self.ws.close()
+        if self.session:
+            await self.session.close()
+            self.session = None
         if self.heartbeat_task:
             self.heartbeat_task.cancel()
         if self.receive_task:

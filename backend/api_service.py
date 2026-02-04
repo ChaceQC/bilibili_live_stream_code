@@ -55,6 +55,8 @@ class ApiService:
     def window_min(self): return self.window_service.window_min()
     def window_max(self): return self.window_service.window_max()
     def window_close(self): 
+        # 尝试停止直播
+        self.live_service.stop_live()
         asyncio.run_coroutine_threadsafe(self.danmu_service.stop(), self.loop)
         return self.window_service.window_close(lambda: self.config_manager.save())
     def get_window_position(self): return self.window_service.get_window_position()
@@ -77,11 +79,11 @@ class ApiService:
     def update_area(self, p_name, s_name): return self.live_service.update_area(p_name, s_name)
     def start_live(self, p_name=None, s_name=None): 
         res = self.live_service.start_live(p_name, s_name)
-        if res['code'] == 0:
-             # 开启直播成功后，连接弹幕
-             room_id = self.session_state.room_id
-             if room_id:
-                 asyncio.run_coroutine_threadsafe(self.danmu_service.connect(room_id), self.loop)
+        # if res['code'] == 0:
+        #      # 开启直播成功后，连接弹幕
+        #      room_id = self.session_state.room_id
+        #      if room_id:
+        #          asyncio.run_coroutine_threadsafe(self.danmu_service.connect(room_id), self.loop)
         return res
         
     def stop_live(self): 
