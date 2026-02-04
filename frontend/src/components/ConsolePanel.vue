@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import { useBridge } from '@/api/bridge';
 
 // 接收父组件传入的实时直播状态
@@ -8,6 +8,7 @@ const { state } = useBridge();
 
 // 复制状态管理 { key: boolean }
 const copyStatus = ref({});
+const logsContainer = ref(null);
 
 const copyToClipboard = async (text, type) => {
   if (!text) return;
@@ -23,6 +24,15 @@ const copyToClipboard = async (text, type) => {
     console.error('复制失败', err);
   }
 };
+
+// 监听日志变化，自动滚动到底部
+watch(() => state.logs.length, () => {
+  nextTick(() => {
+    if (logsContainer.value) {
+      logsContainer.value.scrollTop = logsContainer.value.scrollHeight;
+    }
+  });
+});
 </script>
 
 <template>
@@ -55,7 +65,7 @@ const copyToClipboard = async (text, type) => {
       暂未开始直播
     </div>
 
-    <div class="logs">
+    <div class="logs" ref="logsContainer">
       <div v-for="(l,i) in state.logs" :key="i" class="log-item">{{ l }}</div>
     </div>
   </div>
@@ -105,6 +115,7 @@ const copyToClipboard = async (text, type) => {
   line-height: 1.4;
   border-left: 2px solid transparent;
   padding-left: 8px;
+  word-break: break-all; /* 防止长日志撑开容器 */
 }
 .log-item:hover {
   background: rgba(255,255,255,0.05);

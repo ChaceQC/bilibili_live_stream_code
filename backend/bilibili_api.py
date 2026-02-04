@@ -39,9 +39,11 @@ class BilibiliApi:
             new_data = {}
             for k, v in data.items():
                 # 增加 live_key, sub_session_key 等字段
-                if k in ['rtmp', 'addr', 'code', 'key', 'token', 'csrf', 'csrf_token', 'access_key', 'live_key', 'sub_session_key']:
+                if k in ['rtmp', 'addr', 'code', 'key', 'token', 'csrf', 'csrf_token', 'access_key', 'live_key', 'sub_session_key', 'url', 'qrcode_key', 'refresh_token', 'b_3', 'b_4', 'room_id', 'uid']:
                     if isinstance(v, str):
                         new_data[k] = util.mask_string(v, 4, 4)
+                    elif isinstance(v, (int, float)):
+                        new_data[k] = util.mask_string(str(v), 2, 2)
                     elif isinstance(v, dict):
                         new_data[k] = self._mask_data(v)
                     else:
@@ -55,10 +57,31 @@ class BilibiliApi:
             return [self._mask_data(item) for item in data]
         return data
 
+    def _mask_url(self, url):
+        """脱敏 URL 中的敏感参数"""
+        if not url or "?" not in url:
+            return url
+        try:
+            parsed = urllib.parse.urlparse(url)
+            qs = urllib.parse.parse_qs(parsed.query)
+            changed = False
+            for k in ['uid', 'room_id', 'key', 'token', 'csrf', 'csrf_token', 'access_key', 'qrcode_key']:
+                if k in qs:
+                    qs[k] = [util.mask_string(v, 2, 2) for v in qs[k]]
+                    changed = True
+            
+            if changed:
+                new_query = urllib.parse.urlencode(qs, doseq=True)
+                return urllib.parse.urlunparse(parsed._replace(query=new_query))
+            return url
+        except:
+            return url
+
     def _req(self, method, url, params=None, data=None):
         """通用请求封装"""
         try:
-            logger.debug(f"API Request: {method} {url}")
+            masked_url = self._mask_url(url)
+            logger.debug(f"API Request: {method} {masked_url}")
             
             # 确保 buvid3 在 cookies 中
             req_cookies = self.cookies.copy()
@@ -89,7 +112,7 @@ class BilibiliApi:
                     except:
                         masked_data = "Parse Error"
 
-                logger.debug(f"API Response: {url} -> code={code}, msg={msg}, data={masked_data}")
+                logger.debug(f"API Response: {masked_url} -> code={code}, msg={msg}, data={masked_data}")
                 return True, json_data
             except ValueError:
                 logger.error(f"JSON Decode Error. Status: {resp.status_code}, Content: {resp.text[:100]}")
@@ -107,7 +130,9 @@ class BilibiliApi:
         try:
             url = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
             params = {"qrcode_key": qrcode_key}
-            logger.debug(f"API Request: GET {url}")
+            masked_url = self._mask_url(f"{url}?qrcode_key={qrcode_key}")
+            logger.debug(f"API Request: GET {masked_url}")
+            
             resp = requests.get(url, params=params, headers=self.headers, timeout=10)
             json_data = resp.json()
             code = json_data.get("data", {}).get("code", "N/A")
@@ -121,7 +146,7 @@ class BilibiliApi:
                  except:
                     masked_data = "Parse Error"
 
-            logger.debug(f"API Response: {url} -> code={code}, data={masked_data}")
+            logger.debug(f"API Response: {masked_url} -> code={code}, data={masked_data}")
             return True, json_data, resp.cookies.get_dict()
         except Exception as e:
             logger.error(f"Request Error: {url} -> {e}")

@@ -123,6 +123,8 @@ class LiveService:
         if success:
             if res['code'] == 0:
                 logger.info("Live stream started successfully.")
+                self.state.is_live = True # 标记为正在直播
+                
                 # 成功开启直播后，强制反查一次分区名称，确保数据一致性
                 if self.state.current_area_id:
                     found_names = self._get_names_by_id(self.state.current_area_id)
@@ -159,6 +161,7 @@ class LiveService:
         success, res = self.api.stop_live(self.state.room_id, self.state.csrf)
         if success and res['code'] == 0:
             logger.info("Live stream stopped successfully.")
+            self.state.is_live = False # 标记为停止直播
             return {"code": 0}
         logger.error(f"Stop live failed: {res}")
         return {"code": -1}

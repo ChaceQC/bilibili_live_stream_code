@@ -1,8 +1,18 @@
 <script setup>
-defineProps(['activeTab', 'user']);
+import { computed } from 'vue';
+
+const props = defineProps(['activeTab', 'user']);
 const emit = defineEmits(['change', 'show-account-manager']);
 
 const defaultFace = 'https://static.hdslb.com/images/member/noface.gif';
+
+const menuItems = computed(() => {
+  if (props.user.isLoggedIn) {
+    return ['account', 'stream', 'console', 'danmu'];
+  } else {
+    return ['account', 'console'];
+  }
+});
 </script>
 
 <template>
@@ -10,7 +20,7 @@ const defaultFace = 'https://static.hdslb.com/images/member/noface.gif';
     <div class="logo">📺 B站直播工具</div>
 
     <nav class="nav-menu">
-      <div v-for="t in ['account','stream','console', 'danmu']" :key="t"
+      <div v-for="t in menuItems" :key="t"
            class="item" :class="{active: activeTab===t}" @click="$emit('change', t)">
         {{ t==='account'?'账号': t==='stream'?'直播': t==='console'?'控制台':'弹幕' }}
       </div>

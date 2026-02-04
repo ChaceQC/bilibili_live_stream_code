@@ -12,7 +12,13 @@ const log = (msg) => {
     }
   }
   const time = new Date().toLocaleTimeString();
-  state.logs.unshift(`[${time}] ${msg}`);
+  // 修改为 push，最新的在最下面
+  state.logs.push(`[${time}] ${msg}`);
+  
+  // 限制日志数量，防止内存溢出
+  if (state.logs.length > 500) {
+    state.logs.shift();
+  }
 };
 
 // 暴露给后端调用
