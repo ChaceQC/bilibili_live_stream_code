@@ -24,6 +24,9 @@ class DanmuService:
         self.message_callback = None
         self.log_callback = None
         self.session = None
+        self.reconnect_attempts = 0
+        self.max_reconnect_attempts = 5
+        self.reconnect_delay = 5  # seconds
 
     def set_callback(self, callback):
         self.message_callback = callback
@@ -35,6 +38,14 @@ class DanmuService:
         logger.info(msg)
         if self.log_callback:
             self.log_callback(msg)
+
+    def _notify_frontend(self, msg_type, msg_content):
+        """通知前端消息"""
+        if self.message_callback:
+            self.message_callback({
+                'type': 'system',
+                'msg': msg_content
+            })
 
     def _mask_string(self, s, visible_start=2, visible_end=2):
         """简单的字符串脱敏"""
@@ -111,7 +122,12 @@ class DanmuService:
             await self.stop()
 
         self.running = True
+        self.reconnect_attempts = 0
         
+        await self._connect_internal(room_id)
+
+    async def _connect_internal(self, room_id):
+        """内部连接逻辑，支持重连"""
         # 尝试获取 buvid3，如果不存在则先获取
         if 'buvid3' not in self.api.cookies:
             buvid3 = self.api.get_buvid3()
@@ -133,6 +149,7 @@ class DanmuService:
 
         danmu_info = await self.get_danmu_info(room_id)
         if not danmu_info:
+            self._handle_reconnect(room_id)
             return False
 
         token = danmu_info['token']
@@ -142,11 +159,9 @@ class DanmuService:
         ws_url = f"wss://{host_list[0]['host']}:{host_list[0]['wss_port']}/sub"
         
         try:
-            # # 获取 buvid3
-            # buvid3 = self.api.cookies.get('buvid3', '')
-            # headers = {}
-            # if buvid3:
-            #     headers['Cookie'] = f'buvid3={buvid3}'
+            # 确保之前的 session 已经关闭
+            if self.session:
+                await self.session.close()
 
             self.session = aiohttp.ClientSession()
             self.ws = await self.session.ws_connect(ws_url, headers=self.api.headers, )
@@ -163,18 +178,44 @@ class DanmuService:
             await self.send_packet(7, json.dumps(auth_data))
             
             # 启动心跳和接收任务
-            self.heartbeat_task = asyncio.create_task(self._heartbeat_loop())
-            self.receive_task = asyncio.create_task(self._receive_loop())
+            self.heartbeat_task = asyncio.create_task(self._heartbeat_loop(room_id))
+            self.receive_task = asyncio.create_task(self._receive_loop(room_id))
             
             self._log(f"Connected to danmu server: {ws_url}")
+            self._notify_frontend('system', "弹幕服务器连接成功")
+            self.reconnect_attempts = 0 # 重置重连次数
             return True
         except Exception as e:
             logger.error(f"Failed to connect to danmu server: {e}")
-            self.running = False
             if self.session:
                 await self.session.close()
                 self.session = None
+            self._handle_reconnect(room_id)
             return False
+
+    def _handle_reconnect(self, room_id):
+        """处理重连逻辑"""
+        if not self.running:
+            return
+
+        if self.reconnect_attempts < self.max_reconnect_attempts:
+            self.reconnect_attempts += 1
+            wait_time = self.reconnect_delay * self.reconnect_attempts
+            msg = f"弹幕连接断开，{wait_time}秒后尝试第{self.reconnect_attempts}次重连..."
+            self._log(msg)
+            self._notify_frontend('system', msg)
+            
+            async def reconnect_task():
+                await asyncio.sleep(wait_time)
+                if self.running:
+                    await self._connect_internal(room_id)
+            
+            asyncio.create_task(reconnect_task())
+        else:
+            msg = "弹幕连接失败，已达到最大重连次数"
+            self._log(msg)
+            self._notify_frontend('system', msg)
+            self.running = False
 
     async def stop(self):
         """停止弹幕服务"""
@@ -199,7 +240,7 @@ class DanmuService:
         header = struct.pack('!IHHII', 16 + len(body_bytes), 16, 1, operation, 1)
         await self.ws.send_bytes(header + body_bytes)
 
-    async def _heartbeat_loop(self):
+    async def _heartbeat_loop(self, room_id):
         """心跳循环"""
         while self.running:
             try:
@@ -207,9 +248,10 @@ class DanmuService:
                 await asyncio.sleep(30)
             except Exception as e:
                 logger.error(f"Heartbeat error: {e}")
+                self._handle_reconnect(room_id)
                 break
 
-    async def _receive_loop(self):
+    async def _receive_loop(self, room_id):
         """接收循环"""
         while self.running:
             try:
@@ -217,11 +259,16 @@ class DanmuService:
                 if msg.type == aiohttp.WSMsgType.BINARY:
                     await self._decode_packet(msg.data)
                 elif msg.type == aiohttp.WSMsgType.CLOSED:
+                    logger.warning("WebSocket connection closed")
+                    self._handle_reconnect(room_id)
                     break
                 elif msg.type == aiohttp.WSMsgType.ERROR:
+                    logger.error("WebSocket connection error")
+                    self._handle_reconnect(room_id)
                     break
             except Exception as e:
                 logger.error(f"Receive error: {e}")
+                self._handle_reconnect(room_id)
                 break
 
     async def _decode_packet(self, data):

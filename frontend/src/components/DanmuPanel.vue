@@ -125,6 +125,12 @@ onUnmounted(() => {
             </div>
           </template>
 
+          <template v-else-if="msg.type === 'system'">
+            <div class="system-msg system">
+              {{ msg.msg }}
+            </div>
+          </template>
+
         </div>
       </TransitionGroup>
     </div>
@@ -295,6 +301,11 @@ onUnmounted(() => {
 .system-msg.gift {
   color: #ff6699;
   background: rgba(255, 102, 153, 0.08);
+}
+
+.system-msg.system {
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .system-msg .uname {
