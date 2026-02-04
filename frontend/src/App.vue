@@ -6,6 +6,7 @@ import AccountPanel from '@/components/AccountPanel.vue';
 import StreamPanel from '@/components/StreamPanel.vue';
 import ConsolePanel from '@/components/ConsolePanel.vue';
 import DanmuPanel from '@/components/DanmuPanel.vue';
+import RtmpPanel from '@/components/RtmpPanel.vue';
 import MessageModal from '@/components/MessageModal.vue';
 import UserAccountModal from '@/components/UserAccountModal.vue';
 import WindowControls from '@/components/WindowControls.vue';
@@ -16,7 +17,7 @@ const isInitializing = ref(true);
 
 const userInfo = reactive({ isLoggedIn: false, uname: '', face: '', level: 0, uid: '', money: 0, bcoin: 0, following: 0, follower: 0, dynamic_count: 0, current_exp: 0, next_exp: 0 });
 const globalForm = reactive({ roomId: '', cookie: '', csrf: '', title: '', area: '', subArea: '' });
-const liveState = reactive({ isLive: false, addr: '', code: '' });
+const liveState = reactive({ isLive: false, rtmp1: {}, rtmp2: {}, srt: {} });
 
 const modalState = reactive({ visible: false, title: '', content: '', type: 'info' });
 const showModal = (title, content, type = 'info') => { modalState.title = title; modalState.content = content; modalState.type = type; modalState.visible = true; };
@@ -150,13 +151,19 @@ const handleSidebarAccountClick = () => {
       <main class="content">
         <KeepAlive>
           <component
-            :is="activeTab === 'account' ? AccountPanel : activeTab === 'stream' ? StreamPanel : activeTab === 'console' ? ConsolePanel : DanmuPanel"
+            :is="activeTab === 'account' ? AccountPanel : activeTab === 'stream' ? StreamPanel : activeTab === 'rtmp' ? RtmpPanel : activeTab === 'console' ? ConsolePanel : DanmuPanel"
             :current-user="userInfo"
             :form-data="globalForm"
             :live-state="liveState"
             @update-form="updateForm"
             @login-success="onLoginSuccess"
-            @stream-start="(d) => { liveState.isLive=true; liveState.addr=d.addr; liveState.code=d.code; activeTab='console'; }"
+            @stream-start="(d) => {
+              liveState.isLive=true;
+              liveState.rtmp1=d.rtmp1;
+              liveState.rtmp2=d.rtmp2;
+              liveState.srt=d.srt;
+              activeTab='rtmp';
+            }"
             @stream-stop="() => { liveState.isLive=false; }"
           />
         </KeepAlive>

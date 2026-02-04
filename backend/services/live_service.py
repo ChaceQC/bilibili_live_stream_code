@@ -139,13 +139,44 @@ class LiveService:
                         self.config_manager.data["users"][uid]["last_area_name"] = self.state.current_area_names
                         self.config_manager.save()
                 
-                # Mask RTMP address for logging
-                rtmp_addr = res['data']['rtmp'].get('addr', '')
-                rtmp_code = res['data']['rtmp'].get('code', '')
-                logger.info(f"RTMP Addr: {util.mask_string(rtmp_addr, 10, 5)}")
-                logger.info(f"RTMP Code: {util.mask_string(rtmp_code, 5, 5)}")
+                # 提取推流码逻辑
+                rtmp_data = res['data'].get('rtmp', {})
+                protocols = res['data'].get('protocols', [])
                 
-                return {"code": 0, "data": res['data']['rtmp']}
+                # 1. 默认 RTMP-1
+                rtmp_addr = rtmp_data.get('addr', '')
+                rtmp_code = rtmp_data.get('code', '')
+                
+                # 2. 提取 RTMP-2 (从 protocols 中找第一个 rtmp 协议且有数据的)
+                rtmp2_addr = ""
+                rtmp2_code = ""
+                for p in protocols:
+                    if p.get('protocol') == 'rtmp' and p.get('addr') and p.get('code'):
+                        rtmp2_addr = p.get('addr')
+                        rtmp2_code = p.get('code')
+                        break
+                
+                # 3. 提取 SRT (从 protocols 中找第一个 srt 协议且有数据的)
+                srt_addr = ""
+                srt_code = ""
+                for p in protocols:
+                    if p.get('protocol') == 'srt' and p.get('addr') and p.get('code'):
+                        srt_addr = p.get('addr')
+                        srt_code = p.get('code')
+                        break
+
+                # Mask RTMP address for logging
+                logger.info(f"RTMP-1 Addr: {util.mask_string(rtmp_addr, 10, 5)}")
+                logger.info(f"RTMP-1 Code: {util.mask_string(rtmp_code, 5, 5)}")
+                
+                return {
+                    "code": 0, 
+                    "data": {
+                        "rtmp1": {"addr": rtmp_addr, "code": rtmp_code},
+                        "rtmp2": {"addr": rtmp2_addr, "code": rtmp2_code},
+                        "srt": {"addr": srt_addr, "code": srt_code}
+                    }
+                }
             elif res['code'] == 60024:
                 logger.info("Live stream requires face verification (60024).")
                 return {"code": 60024, "qr": res['data']['qr']}
