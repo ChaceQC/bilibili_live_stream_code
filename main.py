@@ -57,5 +57,49 @@ if __name__ == '__main__':
         x = (primary_screen.width - window.width) // 2
         y = (primary_screen.height - window.height) // 2
         window.move(x, y)
+        
+        # [修复] Windows 下无边框窗口无法通过任务栏图标最小化的问题
+        if sys.platform == 'win32':
+            try:
+                import ctypes
+                hwnd = None
+                
+                # 辅助函数：尝试将 Handle 转换为 int
+                def get_hwnd(handle):
+                    # 如果是 C# IntPtr 对象 (pythonnet)，通常有 ToInt64 方法
+                    if hasattr(handle, 'ToInt64'):
+                        return handle.ToInt64()
+                    # 或者是 ToInt32
+                    elif hasattr(handle, 'ToInt32'):
+                        return handle.ToInt32()
+                    else:
+                        return int(handle)
+
+                # 尝试获取窗口句柄 (兼容不同 pywebview 版本)
+                if hasattr(window, 'gui') and hasattr(window.gui, 'Handle'):
+                    hwnd = get_hwnd(window.gui.Handle)
+                elif hasattr(window, 'native') and hasattr(window.native, 'Handle'):
+                    hwnd = get_hwnd(window.native.Handle)
+                
+                if hwnd:
+                    # GWL_STYLE = -16
+                    user32 = ctypes.windll.user32
+                    style = user32.GetWindowLongW(hwnd, -16)
+                    
+                    # 1. 去除 WS_THICKFRAME (0x00040000) 以消除顶部白条
+                    #    之前的尝试中添加了这个样式导致了白条
+                    style &= ~0x00040000
+                    
+                    # 2. 添加 WS_MINIMIZEBOX (0x00020000) 以支持任务栏点击最小化
+                    style |= 0x00020000 
+                    
+                    user32.SetWindowLongW(hwnd, -16, style)
+                    
+                    # 刷新窗口状态
+                    # SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED
+                    user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0020)
+            except Exception as e:
+                logger.error(f"Failed to set window style: {e}")
+
         window.show()
     webview.start(center_and_show_window, window)
