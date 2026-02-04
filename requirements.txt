@@ -1,5 +1,6 @@
-Pillow==11.3.0
-qrcode==8.2
-Requests==2.32.4
-pystray==0.19.5
-psutil==7.0.0
+pywebview
+requests
+pyinstaller
+protobuf
+brotlipy
+aiohttp

@@ -4,11 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="06b83f79-c93e-41da-b351-86c61f5878b5" name="更改" comment="fix: 对于linux,取消系统托盘支持。">
+    <list default="true" id="06b83f79-c93e-41da-b351-86c61f5878b5" name="更改" comment="fix: 预发布">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/GetCookies.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/GetCookies.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/config.ini" beforeDir="false" afterPath="$PROJECT_DIR$/main/config.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/bilibili_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/bilibili_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/util.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
+    <list id="83882e30-fc48-44a5-8241-3476070d19b5" name="Chace 进行的更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,14 +19,17 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="CSS File" />
+        <option value="JavaScript File" />
         <option value="Python Script" />
+        <option value="Vue Options API Component" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="test" />
+        <entry key="$PROJECT_DIR$" value="master" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -35,16 +40,44 @@
     &quot;assignee&quot;: &quot;ChaceQC&quot;
   }
 }</component>
+  <component name="GitHubPullRequestState">{
+  &quot;prStates&quot;: [
+    {
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDON3B5Nc6h0E2z&quot;,
+        &quot;number&quot;: 18
+      },
+      &quot;lastSeen&quot;: 1754120173106
+    },
+    {
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDON3B5Nc6kP9gO&quot;,
+        &quot;number&quot;: 20
+      },
+      &quot;lastSeen&quot;: 1755595945153
+    },
+    {
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDON3B5Nc675bZj&quot;,
+        &quot;number&quot;: 35
+      },
+      &quot;lastSeen&quot;: 1767800582385
+    }
+  ]
+}</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/ChaceQC/bilibili_live_stream_code.git&quot;,
-    &quot;accountId&quot;: &quot;962eae9c-b510-4680-8327-941fe10f7bbd&quot;
+    &quot;accountId&quot;: &quot;c1d1d4fd-facb-4577-9faa-575ef4dbdf32&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
   <component name="ProjectId" id="307JHmBikNoxpl07ByQjIvyDqB9" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -53,32 +86,43 @@
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;Python.bilibili_live_stream_code.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/chace/PycharmProjects/bilibili_live_stream_code/dist&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;new&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/PythonProject/bilibili_live_stream_code&quot;,
+    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\q-lau\\AppData\\Roaming\\JetBrains\\PyCharm2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;vue.recent.templates&quot;: [
+      &quot;Vue Options API Component&quot;
+    ]
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/dist" />
       <recent name="D:\PythonProject\bilibili_live_stream_code" />
+      <recent name="D:\PythonProject\bilibili_live_stream_code\frontend\public" />
+      <recent name="$PROJECT_DIR$/dist" />
       <recent name="D:\PythonProject\bilibili_live_stream_code\main" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\PythonProject\bilibili_live_stream_code\main" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.main">
     <configuration name="bilibili_live_stream_code" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="bilibili_live_stream_code" />
       <option name="ENV_FILES" value="" />
@@ -93,6 +137,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/bilibili_live_stream_code.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -102,12 +147,40 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="bilibili_live_stream_code" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.bilibili_live_stream_code" />
+      <item itemvalue="Python.main" />
+    </list>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-PY-252.25557.178" />
-        <option value="bundled-python-sdk-ce6832f46686-7b97d883f26b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.25557.178" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PY-253.30387.25" />
+        <option value="bundled-python-sdk-89161513a3c2-6e1f45a539f7-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.30387.25" />
       </set>
     </attachedChunks>
   </component>
@@ -136,6 +209,14 @@
       <workItem from="1756028605152" duration="1346000" />
       <workItem from="1757209747144" duration="1916000" />
       <workItem from="1762224997539" duration="1520000" />
+      <workItem from="1767803115608" duration="1413000" />
+      <workItem from="1767805781696" duration="2113000" />
+      <workItem from="1768316078590" duration="1981000" />
+      <workItem from="1768406212950" duration="5000" />
+      <workItem from="1770037783624" duration="17507000" />
+      <workItem from="1770057621222" duration="15951000" />
+      <workItem from="1770118138783" duration="385000" />
+      <workItem from="1770118544898" duration="1895000" />
     </task>
     <task id="LOCAL-00001" summary="docs: 新建分支，此分支将成为主分支">
       <option name="closed" value="true" />
@@ -193,15 +274,129 @@
       <option name="project" value="LOCAL" />
       <updated>1754486651665</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="perf: 调整窗口大小。">
+      <option name="closed" value="true" />
+      <created>1767801801984</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1767801801984</updated>
+    </task>
+    <task id="LOCAL-00009" summary="fix: 修复移动窗口时的卡顿问题。">
+      <option name="closed" value="true" />
+      <created>1767801831567</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1767801831567</updated>
+    </task>
+    <task id="LOCAL-00010" summary="docs: 更新README.md文档">
+      <option name="closed" value="true" />
+      <created>1767801864504</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1767801864504</updated>
+    </task>
+    <task id="LOCAL-00011" summary="docs: 更新README.md文档">
+      <option name="closed" value="true" />
+      <created>1767802881225</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1767802881225</updated>
+    </task>
+    <task id="LOCAL-00012" summary="fix: 修复因权限问题造成的UP信息获取失败。">
+      <option name="closed" value="true" />
+      <created>1767803835242</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1767803835242</updated>
+    </task>
+    <task id="LOCAL-00013" summary="docs: 更新action">
+      <option name="closed" value="true" />
+      <created>1770057933849</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1770057933850</updated>
+    </task>
+    <task id="LOCAL-00014" summary="fix: 1.修复UP信息不更新问题；2.修复部分信息无法保存问题；3.优化 UI ；">
+      <option name="closed" value="true" />
+      <created>1770062877411</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1770062877411</updated>
+    </task>
+    <task id="LOCAL-00015" summary="fix: 更正程序名称">
+      <option name="closed" value="true" />
+      <created>1770069899294</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1770069899294</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat: 添加程序图标">
+      <option name="closed" value="true" />
+      <created>1770069929377</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1770069929377</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat: 添加程序图标">
+      <option name="closed" value="true" />
+      <created>1770069934074</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1770069934074</updated>
+    </task>
+    <task id="LOCAL-00018" summary="fix: 修复图标问题">
+      <option name="closed" value="true" />
+      <created>1770073056143</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1770073056143</updated>
+    </task>
+    <task id="LOCAL-00019" summary="fix: 尝试解决警告弹窗问题">
+      <option name="closed" value="true" />
+      <created>1770074335876</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1770074335876</updated>
+    </task>
+    <task id="LOCAL-00020" summary="fix: 预发布">
+      <option name="closed" value="true" />
+      <created>1770075759730</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1770075759730</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="6c0c3baa-c69d-4b8c-be66-a432c974a93b" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="6c0c3baa-c69d-4b8c-be66-a432c974a93b">
+          <value>
+            <State />
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -211,16 +406,36 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="docs: 新建分支，此分支将成为主分支" />
-    <MESSAGE value="build: 暂时性迁移，后续将进行代码的重构" />
-    <MESSAGE value="fix: 修复了在linux时，文件打开错误和文件路径获取错误" />
-    <MESSAGE value="feat: 新增了在右下角显示版本号" />
-    <MESSAGE value="refactor: 重构部分代码，将cookies字符串转str抽取为函数" />
-    <MESSAGE value="fix: 修复linux中因为图标未正常加载导致无法启动问题。" />
-    <MESSAGE value="fix: 对于linux,取消系统托盘支持。" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: 对于linux,取消系统托盘支持。" />
+    <MESSAGE value="chore: 在.gitignore文件中添加main/logs" />
+    <MESSAGE value="style: 优化代码格式排版。" />
+    <MESSAGE value="fix: 删去无用控制台输出。" />
+    <MESSAGE value="refactor: 重构代码，整合api请求。" />
+    <MESSAGE value="docx: 更新文件头部注释。" />
+    <MESSAGE value="feat: 新增系统托盘功能。" />
+    <MESSAGE value="docx: 更新requirements.txt。" />
+    <MESSAGE value="fix: 修复兼容性错误，修复修改配置文件冲突问题。" />
+    <MESSAGE value="fix: 更正软件版本错误。" />
+    <MESSAGE value="chore: 在.gitignore文件中添加/main/BiliLiveGUI.lock。" />
+    <MESSAGE value="chore: 更新requirements.txt。" />
+    <MESSAGE value="feat: 新增单一示例运行程序。" />
+    <MESSAGE value="fix: 修复因网络问题使线程不结束，导致主线程无法终止的问题。" />
+    <MESSAGE value="feat: 新增UP信息手动刷新按钮，并设置切换任务栏5分钟以上才会更新UP信息。" />
+    <MESSAGE value="perf: 调整窗口大小。" />
+    <MESSAGE value="fix: 修复移动窗口时的卡顿问题。" />
+    <MESSAGE value="docs: 更新README.md文档" />
+    <MESSAGE value="fix: 修复因权限问题造成的UP信息获取失败。" />
+    <MESSAGE value="docs: 更新action" />
+    <MESSAGE value="fix: 1.修复UP信息不更新问题；2.修复部分信息无法保存问题；3.优化 UI ；" />
+    <MESSAGE value="fix: 更正程序名称" />
+    <MESSAGE value="feat: 添加程序图标" />
+    <MESSAGE value="fix: 修复图标问题" />
+    <MESSAGE value="fix: 尝试解决警告弹窗问题" />
+    <MESSAGE value="fix: 预发布" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: 预发布" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/bilibili_live_stream_code$bilibili_live_stream_code.coverage" NAME="bilibili_live_stream_code 覆盖结果" MODIFIED="1762226261061" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/main" />
+    <SUITE FILE_PATH="coverage/bilibili_live_stream_code$test.coverage" NAME="test 覆盖结果" MODIFIED="1767807147421" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/main" />
+    <SUITE FILE_PATH="coverage/bilibili_live_stream_code$bilibili_live_stream_code.coverage" NAME="bilibili_live_stream_code 覆盖结果" MODIFIED="1768317862676" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/main" />
+    <SUITE FILE_PATH="coverage/bilibili_live_stream_code$main.coverage" NAME="main 覆盖结果" MODIFIED="1770120318388" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

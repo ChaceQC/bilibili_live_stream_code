@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+// https://github.com/SocialSisterYi/bilibili-API-collect/issues/1332#issuecomment-3046115843
+message InteractWordV2 {
+    uint64 uid = 1;
+    string uname = 2;
+
+    enum MsgType {
+        MSG_UNKNOWN = 0;
+        MSG_ENTER_ROOM = 1;
+        MSG_FOLLOW = 2;
+        MSG_SHARE_ROOM = 3;
+    }
+    MsgType msg_type = 5;
+
+    uint32 room_id = 6;
+    uint32 timestamp = 7; // second
+    uint64 score = 8;
+
+    message FansMedal {
+        uint64 target_id = 1; // also named anchor_id or ruid
+        uint32 medal_level = 2;
+        string medal_name = 3;
+        uint32 color = 4;
+        uint32 color_start = 5;
+        uint32 color_end = 6;
+        uint32 color_border = 7;
+        optional uint32 is_lighted = 8;
+        optional uint32 guard_level = 9;
+        uint32 room_id = 12;
+        uint32 score = 13;
+    }
+    optional FansMedal fans_medal = 9;
+
+    message RankInfo {
+        uint32 rank = 1;
+    }
+    RankInfo rank_info = 12;
+
+    uint64 trigger_time = 15; // maybe
+    optional uint32 guard_level = 16; // 可能对应INTERACT_WORD中的privilege_type
+    optional uint32 daily_rank = 17;
+
+    // 19: 排行榜信息
+    // message DailyRankInfo {
+    //     uint32 rank = 1;
+    //     string key = 2;
+    //     string description = 3;
+    // }
+    // optional DaylyRankInfo daily_rank_info = 19;
+
+    message UserInfo {
+        uint64 uid = 1;
+
+        message BaseInfo {
+            string uname = 1;
+            string face = 2;
+            message OriginInfo {
+               string name = 1;
+               string face = 2;
+            }
+            optional OriginInfo origin_info = 6;
+            // message OnlyGodKnow_1 {
+            //    uint64 i_dont_know = 4;
+            // }
+            // optional OnlyGodKnow_1 only_god_know = 7;
+            optional string name_color_str = 8; // username color showed in danmaku
+        }
+        BaseInfo base = 2;
+
+        message MedalInfo {
+            string medal_name = 1;
+            uint32 medal_level = 2;
+            uint32 color_start = 3;
+            uint32 color_end = 4;
+            uint32 color_border = 5;
+            uint32 color = 6;
+            uint32 id = 7; // I don't know what is this
+            uint32 is_lighted = 9;
+            uint64 ruid = 10; // also named target_id or anchor_id
+            uint32 guard_level = 11;
+            uint32 score = 12;
+            string guard_icon = 13;
+            string v2_medal_color_start = 15;
+            string v2_medal_color_end = 16;
+            string v2_medal_color_border = 17;
+            string v2_medal_color_text = 18;
+            string v2_medal_color_level = 19;
+        }
+        optional MedalInfo medal_info = 3;
+
+        message WealthInfo {
+            uint32 level = 1;
+        }
+        optional WealthInfo wealth = 4;
+
+        message GuardInfo {
+            uint32 level = 1;
+            string expired_str = 2;
+        }
+        optional GuardInfo guard = 6;
+    }
+    UserInfo uinfo = 22;
+}

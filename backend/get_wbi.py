@@ -76,4 +76,3 @@ def get_w_rid_and_wts(other_data_dict: dict) -> tuple[dict, str]:
     query = urllib.parse.urlencode(signed_params)
 
     return signed_params, query
-

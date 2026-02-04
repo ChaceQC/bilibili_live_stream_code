@@ -1,0 +1,215 @@
+name: Release BiliLiveTool
+
+on:
+  push:
+    tags:
+      - 'v*' # 触发标签：v1.0, v2.0.1 等
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            asset_name_suffix: linux-amd64
+            pyinstaller_options: ""
+            icon_ext: "png"
+          - os: macos-latest
+            asset_name_suffix: macos-amd64
+            pyinstaller_options: "--windowed"
+            icon_ext: "icns"
+          - os: windows-latest
+            asset_name_suffix: windows-amd64
+            pyinstaller_options: "--noconsole"
+            icon_ext: "ico"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+      shell: bash
+
+    - name: Install Backend Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pyinstaller Pillow
+
+    # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
+    - name: Prepare Platform Icon
+      run: |
+        if [ "${{ matrix.os }}" == "macos-latest" ]; then
+          echo "Converting ICO to ICNS for macOS..."
+          sips -s format png bilibili.ico --out temp_icon.png
+          mkdir bilibili.iconset
+          sips -z 1024 1024 temp_icon.png --out bilibili.iconset/icon_512x512@2x.png
+          iconutil -c icns bilibili.iconset
+          rm -rf bilibili.iconset temp_icon.png
+        elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          echo "Converting ICO to PNG for Linux..."
+          python -c "from PIL import Image; Image.open('bilibili.ico').save('bilibili.png')"
+        fi
+      shell: bash
+
+    # --- 步骤：(核心) 动态生成 Windows 版本信息文件 ---
+    # 这步会解析 git tag (v1.0.0) 并生成 version_info.txt
+    - name: Generate Windows Version Info
+      if: matrix.os == 'windows-latest'
+      run: |
+        # 使用 Python 脚本动态生成 version_info.txt
+        cat <<EOF > generate_version.py
+        import sys
+        
+        # 获取 Tag 版本号，去掉 'v'
+        tag = "${{ github.ref_name }}"
+        clean_ver = tag.lstrip('v') 
+        
+        # 将版本号拆分为 tuple (1, 0, 0, 0)
+        parts = clean_ver.split('.')
+        while len(parts) < 4: parts.append('0')
+        ver_tuple = tuple(map(int, parts[:4]))
+        ver_str = clean_ver
+        
+        # 定义 version_info 模板内容
+        content = f"""
+        # UTF-8
+        VSVersionInfo(
+          ffi=FixedFileInfo(
+            filevers={ver_tuple},
+            prodvers={ver_tuple},
+            mask=0x3f,
+            flags=0x0,
+            OS=0x40004,
+            fileType=0x1,
+            subtype=0x0,
+            date=(0, 0)
+          ),
+          kids=[
+            StringFileInfo(
+              [
+                StringTable(
+                  u'040904B0',
+                  [StringStruct(u'CompanyName', u'BiliLiveTool Open Source'),
+                   StringStruct(u'FileDescription', u'BiliLiveTool Client'),
+                   StringStruct(u'FileVersion', u'{ver_str}'),
+                   StringStruct(u'InternalName', u'BiliLiveTool'),
+                   StringStruct(u'LegalCopyright', u'Copyright (c) 2026 Open Source'),
+                   StringStruct(u'OriginalFilename', u'BiliLiveTool.exe'),
+                   StringStruct(u'ProductName', u'BiliLiveTool'),
+                   StringStruct(u'ProductVersion', u'{ver_str}')])
+              ]
+            ),
+            VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+          ]
+        )
+        """
+        
+        with open("version_info.txt", "w", encoding="utf-8") as f:
+            f.write(content)
+            print(f"Generated version_info.txt for version {ver_str}")
+        EOF
+        
+        # 执行生成脚本
+        python generate_version.py
+      shell: bash
+
+    - name: Package with PyInstaller
+      run: |
+        ICON_NAME="bilibili.${{ matrix.icon_ext }}"
+        
+        # 如果是 Windows，添加版本文件参数
+        EXTRA_ARGS=""
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+           EXTRA_ARGS="--version-file=version_info.txt"
+        fi
+
+        pyinstaller main.py \
+          --name BiliLiveTool \
+          --onefile \
+          --add-data "frontend/dist:frontend/dist" \
+          --icon "$ICON_NAME" \
+          $EXTRA_ARGS \
+          ${{ matrix.pyinstaller_options }}
+      shell: bash
+
+    - name: Prepare Artifacts
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          EXE_NAME="BiliLiveTool.exe"
+          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
+          mv dist/$EXE_NAME .
+          7z a $ASSET_NAME $EXE_NAME
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          APP_NAME="BiliLiveTool.app"
+          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
+          7z a -r $ASSET_NAME dist/$APP_NAME
+        else # Linux
+          EXE_NAME="BiliLiveTool"
+          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.tar.gz"
+          mv dist/$EXE_NAME .
+          tar -czvf $ASSET_NAME $EXE_NAME
+        fi
+        echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BiliLiveTool-${{ matrix.asset_name_suffix }}
+        path: ${{ env.ASSET_NAME }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifacts/*/*
+        body: |
+          ## 🚀 BiliLiveTool ${{ github.ref_name }} 发布
+          
+          ### 📦 下载地址
+          请根据您的系统选择：
+          - **Windows**: 下载 `.zip` 解压使用
+          - **macOS**: 下载 `.zip` 解压运行
+          - **Linux**: 下载 `.tar.gz`
+
+          ### 🛡️ Windows 用户安全提示
+          如果您在 Windows 上运行遇到 **"Windows 已保护你的电脑"** (SmartScreen) 蓝框提示：
+          1. 点击 **"更多信息" (More Info)**
+          2. 点击 **"仍要运行" (Run Anyway)**
+          
+          > 这是因为开源软件未购买昂贵的数字证书，属于正常现象，请放心使用。
+
+        draft: false
+        prerelease: true
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
