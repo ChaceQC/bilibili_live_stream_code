@@ -29,7 +29,7 @@
 1. **克隆仓库**
 
    ```bash
-   git clone https://github.com/your-repo/bilibili_live_stream_code.git
+   git clone https://github.com/ChaceQC/bilibili_live_stream_code.git
    cd bilibili_live_stream_code
    ```
 
