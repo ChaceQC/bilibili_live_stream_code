@@ -153,7 +153,11 @@ jobs:
             --hidden-import cffi \
             --hidden-import qtpy \
             --hidden-import PyQt5 \
-            --hidden-import webview.platforms.qt
+            --hidden-import webview.platforms.qt\
+            --hidden-import brotli\
+            --collect-all cffi \
+            --collect-all brotli
+
         else
             pyinstaller main.py \
               --name BiliLiveTool \
