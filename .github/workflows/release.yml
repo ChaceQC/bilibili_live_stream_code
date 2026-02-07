@@ -145,7 +145,7 @@ jobs:
           --icon "$ICON_NAME" \
           $EXTRA_ARGS \
           ${{ matrix.pyinstaller_options }}
-        elif ["${{matrix.os}}" == "ubuntu-latest"]; then
+        elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            pyinstaller main.py --name BiliLiveTool --onefile \
             --add-data "frontend/dist:frontend/dist" \
             --icon "$ICON_NAME" \
