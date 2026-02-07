@@ -81,7 +81,14 @@
 
    - **Linux**:
      ```bash
-     pyinstaller main.py --name BiliLiveTool --onefile --add-data "frontend/dist:frontend/dist" --icon "bilibili.png"
+     pyinstaller main.py --name BiliLiveTool --onefile \
+      --add-data "frontend/dist:frontend/dist" \
+      --icon "bilibili.png" \
+      --hidden-import _cffi_backend \
+      --hidden-import cffi \
+      --hidden-import qtpy \
+      --hidden-import PyQt5 \
+      --hidden-import webview.platforms.qt
      ```
 
 6. **运行**
