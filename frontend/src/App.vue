@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, provide } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, provide } from 'vue';
 import QRCode from 'qrcode';
 import { useBridge } from '@/api/bridge';
 import Sidebar from '@/components/Sidebar.vue';
@@ -15,6 +15,12 @@ import WindowControls from '@/components/WindowControls.vue';
 const { loadSavedConfig, getWindowPosition, windowDrag, refreshCurrentUser } = useBridge();
 const activeTab = ref('account');
 const isInitializing = ref(true);
+
+// 响应式布局
+const windowWidth = ref(window.innerWidth);
+const isCompact = computed(() => windowWidth.value < 620);
+const isSidebarOpen = ref(false);
+const handleResize = () => { windowWidth.value = window.innerWidth; };
 
 const userInfo = reactive({ isLoggedIn: false, uname: '', face: '', level: 0, uid: '', money: 0, bcoin: 0, following: 0, follower: 0, dynamic_count: 0, current_exp: 0, next_exp: 0 });
 const globalForm = reactive({ roomId: '', cookie: '', csrf: '', title: '', area: '', subArea: '' });
@@ -94,6 +100,8 @@ const handlePointerUp = (event) => {
 // --- 结束 ---
 
 onMounted(async () => {
+  window.addEventListener('resize', handleResize);
+
   try {
     const user = await loadSavedConfig();
     if (user && user.uid) {
@@ -135,6 +143,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
   window.onTrayLiveStarted = null;
   window.onTrayNeedFaceVerify = null;
   window.onTrayLiveStopped = null;
@@ -163,9 +172,15 @@ const onSwitchAccount = (data) => {
 const onLogout = () => { Object.assign(userInfo, { isLoggedIn: false }); globalForm.roomId = ''; globalForm.cookie = ''; globalForm.csrf = ''; activeTab.value = 'account'; showModal('提示', '已退出登录', 'info'); };
 const updateForm = (key, value) => { globalForm[key] = value; };
 
+const handleTabChange = (tab) => {
+  activeTab.value = tab;
+  if (isCompact.value) isSidebarOpen.value = false;
+};
+
 const handleSidebarAccountClick = () => {
   showAccountManager.value = true;
   tryRefreshUserInfo();
+  if (isCompact.value) isSidebarOpen.value = false;
 };
 </script>
 
@@ -179,17 +194,27 @@ const handleSidebarAccountClick = () => {
       @pointermove="handlePointerMove"
       @pointerup="handlePointerUp"
     >
-      <div class="app-title">B站直播工具</div>
+      <div class="drag-bar-left">
+        <button v-if="isCompact" class="menu-btn" @click.stop="isSidebarOpen = !isSidebarOpen">☰</button>
+        <div class="app-title">B站直播工具</div>
+      </div>
       <WindowControls />
     </div>
 
     <div class="app-layout">
-      <Sidebar
-        :active-tab="activeTab"
-        :user="userInfo"
-        @change="t => activeTab = t"
-        @show-account-manager="handleSidebarAccountClick"
-      />
+      <!-- 侧边栏遮罩层（紧凑模式） -->
+      <Transition name="fade-backdrop">
+        <div v-if="isCompact && isSidebarOpen" class="sidebar-backdrop" @click="isSidebarOpen = false"></div>
+      </Transition>
+
+      <div class="sidebar-wrapper" :class="{ 'is-open': isSidebarOpen }">
+        <Sidebar
+          :active-tab="activeTab"
+          :user="userInfo"
+          @change="handleTabChange"
+          @show-account-manager="handleSidebarAccountClick"
+        />
+      </div>
       <main class="content">
         <KeepAlive>
           <component
@@ -249,14 +274,57 @@ const handleSidebarAccountClick = () => {
   touch-action: none; /* 禁用触摸滚动等默认行为 */
 }
 
+.drag-bar-left {
+  display: flex; align-items: center; gap: 4px;
+  pointer-events: none; /* 子元素各自控制 */
+}
+
+.menu-btn {
+  pointer-events: all;
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; line-height: 1;
+  padding: 4px 8px; margin-left: 4px;
+  border-radius: 6px; color: var(--text-sub);
+  transition: background 0.15s;
+}
+.menu-btn:hover { background: rgba(0,0,0,0.08); }
+
 .app-title {
-  font-size: 12px; margin-left: 12px; color: #666; font-weight: 500;
+  font-size: 12px; margin-left: 8px; color: #666; font-weight: 500;
   pointer-events: none;
 }
 
 /* 主布局 */
-.app-layout { display: flex; flex: 1; overflow: hidden; }
+.app-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
 .content { flex: 1; padding: 40px; overflow-y: auto; background: var(--bg-color); }
+
+/* 侧边栏容器 */
+.sidebar-wrapper { flex-shrink: 0; }
+
+/* 紧凑模式遮罩 */
+.sidebar-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 199;
+}
+
+/* 遮罩淡入淡出动画 */
+.fade-backdrop-enter-active, .fade-backdrop-leave-active { transition: opacity 0.2s; }
+.fade-backdrop-enter-from, .fade-backdrop-leave-to { opacity: 0; }
+
+/* 响应式：紧凑模式 */
+@media (max-width: 620px) {
+  .sidebar-wrapper {
+    position: absolute;
+    left: 0; top: 0; height: 100%;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  }
+  .sidebar-wrapper.is-open { transform: translateX(0); }
+  .content:has(.danmu-panel) { padding: 0; }
+}
 
 /* 原有样式保持不变 */
 .loading-screen { height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-color); color: var(--text-sub); }
