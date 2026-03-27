@@ -4,6 +4,8 @@ import json
 import logging
 from backend import util
 
+import shutil  # 用于迁移配置文件
+
 logger = logging.getLogger("Config")
 
 def get_app_path():
@@ -13,7 +15,48 @@ def get_app_path():
         # backend/config.py -> backend -> root
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-CONFIG_FILE = os.path.join(get_app_path(), "config.json")
+def get_config_path():
+    app_path = get_app_path()
+    env_config_home = os.environ.get('BILILIVE_CONFIG_HOME')
+    if env_config_home and env_config_home != '':
+        return env_config_home
+
+    if sys.platform.startswith('linux'):
+        # 给 linux 设置 XDG 标准的 config 位置
+
+        # --- 设置到 config_path ---
+        # 这里直接用的构建里面的名字
+        APP_NAME = "BiliLiveTool"
+        config_home = os.environ.get('XDG_CONFIG_HOME')
+
+        if not config_home or config_home == '':
+            # 默认回退到 ~/.config
+            config_home = os.path.expanduser('~/.config')
+        
+        config_path = os.path.join(config_home, APP_NAME)
+        
+        # 如果不存在则创建目录
+        os.makedirs(config_path, exist_ok=True)
+        # --- 设置结束 ---
+
+        # --- 迁移之前的配置 ---
+        old_config_file = os.path.join(app_path, "config.json")
+        new_config_file = os.path.join(config_path, "config.json")
+
+        if not os.path.isfile(new_config_file) and os.path.isfile(old_config_file):
+            # 如果新配置文件不存在，且有旧的配置文件
+            try:
+                shutil.copy(old_config_file, new_config_file)
+                logger.info(f"已迁移配置文件: {old_config_file} -> {new_config_file}")
+            except Exception as e:
+                logger.error(f"配置文件迁移失败: {e}，直接设置配置文件为 {new_config_file}")
+        # --- 迁移结束 ---
+
+        return config_path
+    else:
+        return app_path
+
+CONFIG_FILE = os.path.join(get_config_path(), "config.json")
 
 class Config:
     def __init__(self):
