@@ -18,9 +18,25 @@ import logging
 from logging.handlers import RotatingFileHandler
 from backend.api_service import ApiService
 
+def get_log_xdg_base_path():
+    """
+    获取 XDG 标准的 log base path
+    """
+    # 获取 XDG 标准的 DATA_HOME
+    data_home = os.environ.get('XDG_DATA_HOME')
+
+    if not data_home or data_home == '':
+        # 默认回退
+        data_home = os.path.expanduser('~/.local/share')
+
+    base_path = os.path.join(data_home, "BiliLiveTool")
+    return base_path
+
 # 获取日志目录
 def get_log_path():
-    if getattr(sys, 'frozen', False):
+    if sys.platform.startswith('linux'):
+        base_path = get_log_xdg_base_path()
+    elif getattr(sys, 'frozen', False):
         base_path = os.path.dirname(sys.executable)
     else:
         base_path = os.path.dirname(os.path.abspath(__file__))
