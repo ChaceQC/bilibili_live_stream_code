@@ -168,14 +168,14 @@ jobs:
             --hidden-import brotli\
             --collect-all cffi \
             --collect-all brotli
-
-        else
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
               --onefile \
               --add-data "frontend/dist:frontend/dist" \
               --add-data "bilibili.ico:." \
               --icon "$ICON_NAME" \
+              --hidden-import _cffi_backend
               $EXTRA_ARGS \
               ${{ matrix.pyinstaller_options }}
         fi
