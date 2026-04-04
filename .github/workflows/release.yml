@@ -59,7 +59,8 @@ jobs:
         sudo apt-get install -y libxcb-xinerama0 libxcb-cursor0 libnss3 python3-dev \
           libxcb-image0-dev libxkbcommon-x11-dev libxcb-xkb-dev libxcb-xinerama0-dev \
           libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-icccm4-dev libxcb-shape0-dev \
-          libpulse-dev
+          libpulse-dev \
+          pkg-config libcairo2-dev libgirepository1.0-dev gir1.2-gtk-3.0
         pip install PyGObject
 
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
