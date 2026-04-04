@@ -168,7 +168,7 @@ const subPartitions = computed(() => {
           <div class="qr-overlay" v-if="!verifyQr">加载中...</div>
         </div>
         <p class="verify-tip">请使用 <strong>Bilibili App</strong> 扫码完成认证</p>
-        <button class="btn btn-primary full-width" @click="showVerify=false">我已完成认证</button>
+        <button class="btn btn-primary full-width" @click="showVerify=false; doToggle()">我已完成认证</button>
       </div>
     </div>
   </Teleport>
