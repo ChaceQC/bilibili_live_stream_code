@@ -174,7 +174,7 @@ jobs:
               --add-data "frontend/dist:frontend/dist" \
               --add-data "bilibili.ico:." \
               --icon "$ICON_NAME" \
-              --hidden-import _cffi_backend
+              --hidden-import _cffi_backend \
               $EXTRA_ARGS \
               ${{ matrix.pyinstaller_options }}
         fi
