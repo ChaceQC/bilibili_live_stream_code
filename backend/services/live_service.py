@@ -180,6 +180,9 @@ class LiveService:
             elif res['code'] == 60024:
                 logger.info("Live stream requires face verification (60024).")
                 return {"code": 60024, "qr": res['data']['qr']}
+            elif res['code'] == 60043:
+                logger.info("Live stream requires face verification (60043).")
+                return {"code": 60043, "qr": f"https://www.bilibili.com/blackboard/live/face-auth-middle.html?source_event=400&mid={self.state.uid}"}
             
             logger.error(f"Start live failed: {res}")
             return {"code": -1, "msg": res.get('msg')}
