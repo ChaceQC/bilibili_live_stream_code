@@ -60,8 +60,12 @@ jobs:
           libxcb-image0-dev libxkbcommon-x11-dev libxcb-xkb-dev libxcb-xinerama0-dev \
           libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-icccm4-dev libxcb-shape0-dev \
           libpulse-dev \
-          pkg-config libglib2.0-dev libgirepository1.0-dev libcairo2-dev \
+          pkg-config libglib2.0-dev libgirepository-2.0-dev libcairo2-dev \
           gobject-introspection gir1.2-gtk-3.0
+          
+        # --- 核心修复：防止 GitHub setup-python 屏蔽系统级 C 库路径 ---
+        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH
+        
         pip install PyGObject
 
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
@@ -81,25 +85,20 @@ jobs:
       shell: bash
 
     # --- 步骤：(核心) 动态生成 Windows 版本信息文件 ---
-    # 这步会解析 git tag (v1.0.0) 并生成 version_info.txt
     - name: Generate Windows Version Info
       if: matrix.os == 'windows-latest'
       run: |
-        # 使用 Python 脚本动态生成 version_info.txt
         cat <<EOF > generate_version.py
         import sys
         
-        # 获取 Tag 版本号，去掉 'v'
         tag = "${{ github.ref_name }}"
         clean_ver = tag.lstrip('v') 
         
-        # 将版本号拆分为 tuple (1, 0, 0, 0)
         parts = clean_ver.split('.')
         while len(parts) < 4: parts.append('0')
         ver_tuple = tuple(map(int, parts[:4]))
         ver_str = clean_ver
         
-        # 定义 version_info 模板内容
         content = f"""
         # UTF-8
         VSVersionInfo(
@@ -138,7 +137,6 @@ jobs:
             print(f"Generated version_info.txt for version {ver_str}")
         EOF
         
-        # 执行生成脚本
         python generate_version.py
       shell: bash
 
@@ -146,7 +144,6 @@ jobs:
       run: |
         ICON_NAME="bilibili.${{ matrix.icon_ext }}"
         
-        # 如果是 Windows，添加版本文件参数
         EXTRA_ARGS=""
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
            EXTRA_ARGS="--version-file=version_info.txt"
