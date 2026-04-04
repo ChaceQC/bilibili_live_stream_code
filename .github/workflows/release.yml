@@ -60,7 +60,8 @@ jobs:
           libxcb-image0-dev libxkbcommon-x11-dev libxcb-xkb-dev libxcb-xinerama0-dev \
           libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-icccm4-dev libxcb-shape0-dev \
           libpulse-dev \
-          pkg-config libcairo2-dev libgirepository1.0-dev gir1.2-gtk-3.0
+          pkg-config libglib2.0-dev libgirepository1.0-dev libcairo2-dev \
+          gobject-introspection gir1.2-gtk-3.0
         pip install PyGObject
 
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
@@ -180,7 +181,6 @@ jobs:
               $EXTRA_ARGS \
               ${{ matrix.pyinstaller_options }}
         fi
-
 
       shell: bash
 
