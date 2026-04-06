@@ -177,7 +177,9 @@ if __name__ == '__main__':
                     
                     # 1. 去除 WS_THICKFRAME (0x00040000) 以消除顶部白条
                     #    之前的尝试中添加了这个样式导致了白条
-                    style &= ~0x00040000
+                    # style &= ~0x00040000
+                    # 但我们现在需要使窗口可以 resize
+                    style |= 0x00040000  # WS_THICKFRAME
                     
                     # 2. 添加 WS_MINIMIZEBOX (0x00020000) 以支持任务栏点击最小化
                     style |= 0x00020000 
@@ -187,6 +189,9 @@ if __name__ == '__main__':
                     # 刷新窗口状态
                     # SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED
                     user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0020)
+
+                    # 注入 HWND 到 window_service，供透明度/置顶 API 使用
+                    api.window_service.set_hwnd(hwnd)
             except Exception as e:
                 logger.error(f"Failed to set window style: {e}")
 

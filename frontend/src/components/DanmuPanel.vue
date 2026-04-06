@@ -1,13 +1,38 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useBridge } from '@/api/bridge';
 
-const { startDanmuMonitor, stopDanmuMonitor, sendDanmu } = useBridge();
+const { startDanmuMonitor, stopDanmuMonitor, sendDanmu, setWindowOpacity, setWindowTopmost } = useBridge();
 const messages = ref([]);
 const messageListRef = ref(null);
 const isAutoScroll = ref(true);
 const inputMsg = ref('');
 const sending = ref(false);
+
+// 置顶状态
+const isTopmost = ref(false);
+const toggleTopmost = async () => {
+  isTopmost.value = !isTopmost.value;
+  const res = await setWindowTopmost(isTopmost.value);
+  if (res && res.code !== 0) {
+    console.error('置顶失败:', res.msg);
+    isTopmost.value = !isTopmost.value; // 回滚
+  }
+};
+
+// 透明度 (100 = 完全不透明)
+const opacity = ref(100);
+let opacityTimer = null;
+watch(opacity, (val) => {
+  // 拖动时节流，避免频繁调用
+  clearTimeout(opacityTimer);
+  opacityTimer = setTimeout(async () => {
+    const res = await setWindowOpacity(val);
+    if (res && res.code !== 0) {
+      console.error('透明度设置失败:', res.msg);
+    }
+  }, 80);
+});
 
 const addMessage = (data) => {
   messages.value.push(data);
@@ -89,8 +114,21 @@ onUnmounted(() => {
     <div class="danmu-header">
       <h3>弹幕监控</h3>
       <div class="controls">
-        <label>
+        <label class="ctrl-label">
           <input type="checkbox" v-model="isAutoScroll"> 自动滚动
+        </label>
+        <button
+          class="ctrl-btn"
+          :class="{ active: isTopmost }"
+          @click="toggleTopmost"
+          :title="isTopmost ? '取消置顶' : '置顶显示'"
+        >
+          📌 {{ isTopmost ? '已置顶' : '置顶' }}
+        </button>
+        <label class="ctrl-label opacity-label" title="调节窗口不透明度">
+          <span>透明度</span>
+          <input type="range" min="70" max="100" v-model.number="opacity" class="opacity-slider" />
+          <span class="opacity-val">{{ opacity }}%</span>
         </label>
       </div>
     </div>
@@ -157,22 +195,22 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-
-  /* [核心修改] 宽度 80% 并居中 */
-  width: 80%;
+  width: 100%;
+  max-width: 680px;
   margin: 0 auto;
-
   background: #f2f2f2; /* QQ 经典的浅灰底色 */
-  border-radius: 16px; /* 圆润边框 */
+  border-radius: 16px;
   overflow: hidden;
   font-family: "PingFang SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
   box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-sizing: border-box;
 }
 
 .danmu-header {
   padding: 12px 18px;
   border-bottom: 1px solid rgba(0,0,0,0.06);
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   background: #f9f9f9;
@@ -186,14 +224,49 @@ onUnmounted(() => {
 }
 
 .controls {
-  font-size: 12px;
-  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   user-select: none;
 }
-.controls input {
-  vertical-align: middle;
-  margin-top: -2px;
+
+.ctrl-label {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
+.ctrl-label input[type="checkbox"] {
+  vertical-align: middle;
+  margin-top: -1px;
+}
+
+.ctrl-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: white;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.ctrl-btn:hover { background: #f3f4f6; border-color: #9ca3af; }
+.ctrl-btn.active { background: #dbeafe; border-color: #60a5fa; color: #2563eb; font-weight: 600; }
+
+.opacity-label { gap: 6px; }
+.opacity-slider {
+  width: 70px;
+  height: 4px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+.opacity-val { min-width: 28px; color: #888; }
 
 .message-list {
   flex: 1;
@@ -361,6 +434,28 @@ onUnmounted(() => {
   background: #e0e0e0;
   color: #aaa;
   cursor: not-allowed;
+}
+
+/* === 紧凑模式（≤620px）=== */
+@media (max-width: 620px) {
+  .danmu-panel {
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--bg-color, #f2f2f2);
+  }
+
+  .danmu-header {
+    padding: 8px 10px;
+  }
+
+  .message-list {
+    padding: 8px 10px;
+  }
+
+  .send-area {
+    padding: 8px 10px;
+  }
 }
 
 /* === 动画效果 === */

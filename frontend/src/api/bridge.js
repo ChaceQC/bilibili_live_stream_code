@@ -189,6 +189,14 @@ export const useBridge = () => {
       return res;
     },
 
+    // 弹幕面板窗口控制
+    async setWindowOpacity(opacityPercent) {
+      return await callPy('set_window_opacity', opacityPercent);
+    },
+    async setWindowTopmost(onTop) {
+      return await callPy('set_window_topmost', onTop);
+    },
+
     // App 配置
     async getAppConfig() {
       const res = await callPy('get_app_config');
