@@ -129,7 +129,7 @@ export const useBridge = () => {
         if (res.code === 0) {
           log('获取成功，已开播！');
           return { success: true, data: res.data };
-        } else if (res.code === 60024) {
+        } else if (res.code === 60024 || res.code === 60043) {
           log('⚠️ 需要人脸验证');
           return { success: false, needFaceVerify: true, qrUrl: res.qr };
         } else {
