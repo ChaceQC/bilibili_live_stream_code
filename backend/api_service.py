@@ -156,3 +156,19 @@ class ApiService:
             self.config_manager.save()
             return {"code": 0}
         return {"code": -1, "msg": "Unknown config key"}
+
+    def get_version(self):
+        """获取应用版本号"""
+        import os, sys
+        try:
+            if getattr(sys, 'frozen', False):
+                base = sys._MEIPASS
+            else:
+                base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            version_file = os.path.join(base, 'VERSION')
+            if os.path.exists(version_file):
+                with open(version_file, 'r', encoding='utf-8') as f:
+                    return {"code": 0, "version": f.read().strip()}
+        except Exception:
+            pass
+        return {"code": 0, "version": "dev"}

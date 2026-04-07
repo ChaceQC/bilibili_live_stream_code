@@ -1,10 +1,13 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { useBridge } from '@/api/bridge';
 
 const props = defineProps(['activeTab', 'user']);
 const emit = defineEmits(['change', 'show-account-manager']);
 
+const { getVersion } = useBridge();
 const defaultFace = 'https://static.hdslb.com/images/member/noface.gif';
+const appVersion = ref('');
 
 const menuItems = computed(() => {
   if (props.user.isLoggedIn) {
@@ -12,6 +15,10 @@ const menuItems = computed(() => {
   } else {
     return ['account', 'console'];
   }
+});
+
+onMounted(async () => {
+  appVersion.value = await getVersion();
 });
 </script>
 
@@ -39,6 +46,8 @@ const menuItems = computed(() => {
       <div class="avatar-placeholder">?</div>
       <div class="info">未登录</div>
     </div>
+
+    <div v-if="appVersion" class="version-tag">{{ appVersion }}</div>
   </aside>
 </template>
 
@@ -108,4 +117,12 @@ const menuItems = computed(() => {
 .name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lv { font-size: 12px; color: #888; }
 .indicator { color: #aaa; font-size: 16px; }
+
+.version-tag {
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
 </style>

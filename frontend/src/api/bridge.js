@@ -197,6 +197,12 @@ export const useBridge = () => {
     async setAppConfig(key, value) {
       const res = await callPy('set_app_config', key, value);
       return res.code === 0;
+    },
+
+    // 版本号
+    async getVersion() {
+      const res = await callPy('get_version');
+      return res.code === 0 ? res.version : 'dev';
     }
   };
 };
