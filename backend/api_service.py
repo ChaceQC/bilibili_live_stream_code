@@ -95,8 +95,13 @@ class ApiService:
     def load_saved_config(self): return self.user_service.load_saved_config()
     def refresh_current_user(self): return self.user_service.refresh_current_user()
     def get_account_list(self): return self.user_service.get_account_list()
-    def switch_account(self, uid): return self.user_service.switch_account(uid)
-    def logout(self, uid): return self.user_service.logout(uid)
+    def switch_account(self, uid):
+        # 切换账户前先停止弹幕，防止新连接使用旧账户
+        asyncio.run_coroutine_threadsafe(self.danmu_service.stop(), self.loop)
+        return self.user_service.switch_account(uid)
+    def logout(self, uid):
+        asyncio.run_coroutine_threadsafe(self.danmu_service.stop(), self.loop)
+        return self.user_service.logout(uid)
 
     # --- Auth Proxy Methods ---
     def get_login_qrcode(self): return self.auth_service.get_login_qrcode()
