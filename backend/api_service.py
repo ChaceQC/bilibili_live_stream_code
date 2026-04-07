@@ -117,13 +117,13 @@ class ApiService:
         
     def stop_live(self): 
         res = self.live_service.stop_live()
-        if res['code'] == 0:
-            asyncio.run_coroutine_threadsafe(self.danmu_service.stop(), self.loop)
         return res
 
     # --- Danmu Methods ---
     def start_danmu_monitor(self):
-        """手动开启弹幕监听（用于测试或非开播状态）"""
+        """开启弹幕监听，如果已在运行则跳过"""
+        if self.danmu_service.running:
+            return {"code": 0, "msg": "弹幕已在运行"}
         room_id = self.session_state.room_id
         if not room_id:
              return {"code": -1, "msg": "未获取到房间ID"}

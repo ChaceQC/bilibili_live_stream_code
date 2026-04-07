@@ -25,8 +25,9 @@ class DanmuService:
         self.log_callback = None
         self.session = None
         self.reconnect_attempts = 0
-        self.max_reconnect_attempts = 5
-        self.reconnect_delay = 5  # seconds
+        self.reconnect_delay = 5  # 初始重连延迟（秒）
+        self.max_reconnect_delay = 60  # 最大重连延迟（秒）
+        self._reconnecting = False  # 防止重复触发重连
 
     def set_callback(self, callback):
         self.message_callback = callback
@@ -123,11 +124,38 @@ class DanmuService:
 
         self.running = True
         self.reconnect_attempts = 0
+        self._reconnecting = False
         
         await self._connect_internal(room_id)
 
+    async def _cleanup_connection(self):
+        """清理旧的连接资源"""
+        # 取消旧的任务
+        if self.heartbeat_task:
+            self.heartbeat_task.cancel()
+            self.heartbeat_task = None
+        if self.receive_task:
+            self.receive_task.cancel()
+            self.receive_task = None
+        # 关闭旧的 WebSocket 和 session
+        if self.ws:
+            try:
+                await self.ws.close()
+            except Exception:
+                pass
+            self.ws = None
+        if self.session:
+            try:
+                await self.session.close()
+            except Exception:
+                pass
+            self.session = None
+
     async def _connect_internal(self, room_id):
         """内部连接逻辑，支持重连"""
+        # 先清理旧连接
+        await self._cleanup_connection()
+
         # 尝试获取 buvid3，如果不存在则先获取
         if 'buvid3' not in self.api.cookies:
             buvid3 = self.api.get_buvid3()
@@ -149,7 +177,7 @@ class DanmuService:
 
         danmu_info = await self.get_danmu_info(room_id)
         if not danmu_info:
-            self._handle_reconnect(room_id)
+            self._schedule_reconnect(room_id)
             return False
 
         token = danmu_info['token']
@@ -159,12 +187,8 @@ class DanmuService:
         ws_url = f"wss://{host_list[0]['host']}:{host_list[0]['wss_port']}/sub"
         
         try:
-            # 确保之前的 session 已经关闭
-            if self.session:
-                await self.session.close()
-
             self.session = aiohttp.ClientSession()
-            self.ws = await self.session.ws_connect(ws_url, headers=self.api.headers, )
+            self.ws = await self.session.ws_connect(ws_url, headers=self.api.headers)
             
             # 发送认证包
             auth_data = {
@@ -183,52 +207,44 @@ class DanmuService:
             
             self._log(f"Connected to danmu server: {ws_url}")
             self._notify_frontend('system', "弹幕服务器连接成功")
-            self.reconnect_attempts = 0 # 重置重连次数
+            self.reconnect_attempts = 0  # 重连成功，重置计数
+            self._reconnecting = False
             return True
         except Exception as e:
             logger.error(f"Failed to connect to danmu server: {e}")
-            if self.session:
-                await self.session.close()
-                self.session = None
-            self._handle_reconnect(room_id)
+            await self._cleanup_connection()
+            self._schedule_reconnect(room_id)
             return False
 
-    def _handle_reconnect(self, room_id):
-        """处理重连逻辑"""
+    def _schedule_reconnect(self, room_id):
+        """调度重连任务（带指数退避，无次数上限）"""
         if not self.running:
             return
+        # 防止重复触发
+        if self._reconnecting:
+            return
+        self._reconnecting = True
 
-        if self.reconnect_attempts < self.max_reconnect_attempts:
-            self.reconnect_attempts += 1
-            wait_time = self.reconnect_delay * self.reconnect_attempts
-            msg = f"弹幕连接断开，{wait_time}秒后尝试第{self.reconnect_attempts}次重连..."
-            self._log(msg)
-            self._notify_frontend('system', msg)
-            
-            async def reconnect_task():
-                await asyncio.sleep(wait_time)
-                if self.running:
-                    await self._connect_internal(room_id)
-            
-            asyncio.create_task(reconnect_task())
-        else:
-            msg = "弹幕连接失败，已达到最大重连次数"
-            self._log(msg)
-            self._notify_frontend('system', msg)
-            self.running = False
+        self.reconnect_attempts += 1
+        # 指数退避：5, 10, 20, 40, 60, 60, 60...
+        wait_time = min(self.reconnect_delay * (2 ** (self.reconnect_attempts - 1)), self.max_reconnect_delay)
+        msg = f"弹幕连接断开，{wait_time}秒后尝试第{self.reconnect_attempts}次重连..."
+        self._log(msg)
+        self._notify_frontend('system', msg)
+        
+        async def reconnect_task():
+            await asyncio.sleep(wait_time)
+            self._reconnecting = False
+            if self.running:
+                await self._connect_internal(room_id)
+        
+        asyncio.create_task(reconnect_task())
 
     async def stop(self):
         """停止弹幕服务"""
         self.running = False
-        if self.ws:
-            await self.ws.close()
-        if self.session:
-            await self.session.close()
-            self.session = None
-        if self.heartbeat_task:
-            self.heartbeat_task.cancel()
-        if self.receive_task:
-            self.receive_task.cancel()
+        self._reconnecting = False
+        await self._cleanup_connection()
         self._log("Danmu service stopped")
 
     async def send_packet(self, operation, body):
@@ -246,10 +262,12 @@ class DanmuService:
             try:
                 await self.send_packet(2, "")
                 await asyncio.sleep(30)
+            except asyncio.CancelledError:
+                return
             except Exception as e:
                 logger.error(f"Heartbeat error: {e}")
-                self._handle_reconnect(room_id)
-                break
+                self._schedule_reconnect(room_id)
+                return
 
     async def _receive_loop(self, room_id):
         """接收循环"""
@@ -260,16 +278,18 @@ class DanmuService:
                     await self._decode_packet(msg.data)
                 elif msg.type == aiohttp.WSMsgType.CLOSED:
                     logger.warning("WebSocket connection closed")
-                    self._handle_reconnect(room_id)
-                    break
+                    self._schedule_reconnect(room_id)
+                    return
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     logger.error("WebSocket connection error")
-                    self._handle_reconnect(room_id)
-                    break
+                    self._schedule_reconnect(room_id)
+                    return
+            except asyncio.CancelledError:
+                return
             except Exception as e:
                 logger.error(f"Receive error: {e}")
-                self._handle_reconnect(room_id)
-                break
+                self._schedule_reconnect(room_id)
+                return
 
     async def _decode_packet(self, data):
         """解码数据包"""

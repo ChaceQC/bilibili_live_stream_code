@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onActivated, nextTick } from 'vue';
 import { useBridge } from '@/api/bridge';
 
-const { startDanmuMonitor, stopDanmuMonitor, sendDanmu } = useBridge();
+const { startDanmuMonitor, sendDanmu } = useBridge();
 const messages = ref([]);
 const messageListRef = ref(null);
 const isAutoScroll = ref(true);
@@ -70,18 +70,17 @@ const handleSend = async () => {
   }
 };
 
-onMounted(() => {
-  // 暴露给全局，供 Python 调用
+// 使用 onActivated/onDeactivated 替代 onMounted/onUnmounted
+// 因为父组件使用了 KeepAlive，onMounted 只会在第一次进入时触发
+// onActivated 会在每次切换到弹幕 Tab 时触发，确保弹幕能重新连接
+onActivated(() => {
   window.onDanmuMessage = (data) => {
     addMessage(data);
   };
   startDanmuMonitor();
 });
 
-onUnmounted(() => {
-  stopDanmuMonitor();
-  window.onDanmuMessage = null;
-});
+// 切出弹幕 Tab 时不停止弹幕连接，让弹幕在后台持续运行
 </script>
 
 <template>
