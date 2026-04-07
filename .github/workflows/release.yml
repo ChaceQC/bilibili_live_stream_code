@@ -6,8 +6,30 @@ on:
       - 'v*' # 触发标签：v1.0, v2.0.1 等
 
 jobs:
+  update-version:
+    name: Update VERSION
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: master
+
+    - name: Write and push VERSION
+      run: |
+        echo "${{ github.ref_name }}" > VERSION
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add VERSION
+        git diff --cached --quiet || git commit -m "chore: update VERSION to ${{ github.ref_name }}"
+        git push
+      shell: bash
+
   build:
     name: Build on ${{ matrix.os }}
+    needs: update-version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -29,6 +51,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        ref: master
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -83,6 +107,7 @@ jobs:
           python -c "from PIL import Image; Image.open('bilibili.ico').save('bilibili.png')"
         fi
       shell: bash
+
 
     # --- 步骤：(核心) 动态生成 Windows 版本信息文件 ---
     - name: Generate Windows Version Info
@@ -152,6 +177,7 @@ jobs:
           --onefile \
           --add-data "frontend/dist:frontend/dist" \
           --add-data "bilibili.ico;." \
+          --add-data "VERSION;." \
           --icon "$ICON_NAME" \
           $EXTRA_ARGS \
           ${{ matrix.pyinstaller_options }}
@@ -159,6 +185,7 @@ jobs:
            pyinstaller main.py --name BiliLiveTool --onedir \
             --add-data "frontend/dist:frontend/dist" \
             --add-data "bilibili.ico:." \
+            --add-data "VERSION:." \
             --hidden-import _cffi_backend \
             --hidden-import cffi \
             --hidden-import qtpy \
@@ -173,6 +200,7 @@ jobs:
               --onefile \
               --add-data "frontend/dist:frontend/dist" \
               --add-data "bilibili.ico:." \
+              --add-data "VERSION:." \
               --icon "$ICON_NAME" \
               --hidden-import _cffi_backend \
               $EXTRA_ARGS \
@@ -183,17 +211,18 @@ jobs:
 
     - name: Prepare Artifacts
       run: |
+        VERSION="${{ github.ref_name }}"
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
           EXE_NAME="BiliLiveTool.exe"
-          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
+          ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
           mv dist/$EXE_NAME .
           7z a $ASSET_NAME $EXE_NAME
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
           APP_NAME="BiliLiveTool.app"
-          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.zip"
+          ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
           7z a -r $ASSET_NAME dist/$APP_NAME
         else # Linux
-          ASSET_NAME="BiliLiveTool-${{ matrix.asset_name_suffix }}.tar.gz"
+          ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.tar.gz"
           tar -czvf $ASSET_NAME -C dist BiliLiveTool
         fi
         echo "ASSET_NAME=${ASSET_NAME}" >> $GITHUB_ENV
@@ -202,7 +231,7 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: BiliLiveTool-${{ matrix.asset_name_suffix }}
+        name: BiliLiveTool-${{ github.ref_name }}-${{ matrix.asset_name_suffix }}
         path: ${{ env.ASSET_NAME }}
 
   create-release:
@@ -213,6 +242,7 @@ jobs:
       contents: write
 
     steps:
+
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
