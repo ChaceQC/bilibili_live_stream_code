@@ -18,6 +18,7 @@ class UserService:
             masked_uid = util.mask_string(str(uid))
             logger.info(f"Init user: {user.get('uname')} ({masked_uid})")
             self.api.update_cookies(util.ck_str_to_dict(user.get("cookie", "")))
+            self.state.uid = int(uid)
             self.state.room_id = user.get("roomId", "")
             self.state.csrf = user.get("csrf", "")
             self.state.current_area_id = user.get("last_area_id")
@@ -51,6 +52,7 @@ class UserService:
         config_data["current_uid"] = uid
         self.config_manager.save()
         
+        self.state.uid = int(uid)
         self.state.room_id = str(room_id)
         self.state.csrf = csrf
         self.state.current_area_id = new_data["last_area_id"]
