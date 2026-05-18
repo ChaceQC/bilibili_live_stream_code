@@ -80,17 +80,6 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libxcb-xinerama0 libxcb-cursor0 libnss3 python3-dev \
-          libxcb-image0-dev libxkbcommon-x11-dev libxcb-xkb-dev libxcb-xinerama0-dev \
-          libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-icccm4-dev libxcb-shape0-dev \
-          libpulse-dev \
-          pkg-config libglib2.0-dev libgirepository-2.0-dev libcairo2-dev \
-          gobject-introspection gir1.2-gtk-3.0
-          
-        # --- 核心修复：防止 GitHub setup-python 屏蔽系统级 C 库路径 ---
-        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:$PKG_CONFIG_PATH
-        
-        pip install PyGObject
 
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
     - name: Prepare Platform Icon
@@ -191,9 +180,6 @@ jobs:
             --hidden-import qtpy \
             --hidden-import PyQt5 \
             --hidden-import webview.platforms.qt\
-            --hidden-import brotli\
-            --collect-all cffi \
-            --collect-all brotli
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
