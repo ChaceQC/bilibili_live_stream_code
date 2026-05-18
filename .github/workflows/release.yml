@@ -33,9 +33,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-20.04, macos-latest, windows-latest]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             asset_name_suffix: linux-amd64
             pyinstaller_options: ""
             icon_ext: "png"
@@ -77,9 +77,10 @@ jobs:
         pip install pyinstaller Pillow
 
     - name: Install Linux Dependencies
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-20.04'
       run: |
         sudo apt-get update
+        sudo apt-get install -y libnss3 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrender1 libxtst6 libxcb-glx0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xinerama0 libxcb1 libxkbcommon-x11-0 libxkbcommon0
 
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
     - name: Prepare Platform Icon
@@ -91,14 +92,14 @@ jobs:
           sips -z 1024 1024 temp_icon.png --out bilibili.iconset/icon_512x512@2x.png
           iconutil -c icns bilibili.iconset
           rm -rf bilibili.iconset temp_icon.png
-        elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+        elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
           echo "Converting ICO to PNG for Linux..."
           python -c "from PIL import Image; Image.open('bilibili.ico').save('bilibili.png')"
         fi
       shell: bash
 
 
-    # --- 步骤：(核心) 动态生成 Windows 版本信息文件 ---
+    # --- 步骤：(核心) 动态生成 Windows 版本信息 file ---
     - name: Generate Windows Version Info
       if: matrix.os == 'windows-latest'
       run: |
@@ -170,8 +171,8 @@ jobs:
           --icon "$ICON_NAME" \
           $EXTRA_ARGS \
           ${{ matrix.pyinstaller_options }}
-        elif [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-           pyinstaller main.py --name BiliLiveTool --onedir \
+        elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+           pyinstaller main.py --name BiliLiveTool --onefile \
             --add-data "frontend/dist:frontend/dist" \
             --add-data "bilibili.ico:." \
             --add-data "VERSION:." \
