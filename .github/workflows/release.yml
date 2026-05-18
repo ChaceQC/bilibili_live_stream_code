@@ -179,7 +179,7 @@ jobs:
             --hidden-import cffi \
             --hidden-import qtpy \
             --hidden-import PyQt5 \
-            --hidden-import webview.platforms.qt\
+            --hidden-import webview.platforms.qt
         elif [ "${{ matrix.os }}" == "macos-latest" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
