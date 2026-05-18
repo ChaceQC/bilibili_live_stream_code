@@ -13,6 +13,10 @@ if sys.platform == 'linux':
     # [Fix] 禁用平台主题插件 (如 qt5ct, gtk2)，防止它们加载 GTK
     if "QT_QPA_PLATFORMTHEME" in os.environ:
         del os.environ["QT_QPA_PLATFORMTHEME"]
+    # [Fix] 新增：彻底禁用 GLX 和 WebEngine/Chromium 的 GPU 加速
+    # 修复在 WSL、虚拟机或部分 Wayland/NVIDIA 环境下由于显卡渲染透传失败导致的 "Could not initialize GLX" 闪退
+    os.environ["QT_XCB_GL_INTEGRATION"] = "none"
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox"
 elif sys.platform == 'darwin':
     # macOS: 使用原生 cocoa 后端
     os.environ["QT_QPA_PLATFORM"] = "cocoa"
