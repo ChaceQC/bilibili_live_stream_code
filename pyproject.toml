@@ -1,0 +1,19 @@
+[project]
+name = "bilibili-live-stream-code"
+version = "2.3.13"
+requires-python = ">=3.12"
+dependencies = [
+    "pywebview",
+    "requests",
+    "pyinstaller",
+    "protobuf",
+    "brotlipy",
+    "aiohttp",
+    "Pillow",
+    "qtpy>=2.4.0",
+    "PyQt5>=5.15.0",
+    "PyQtWebEngine>=5.15.0",
+    "cffi>=1.15.0",
+    "brotli>=1.0.9",
+    "pystray"
+]
