@@ -17,6 +17,12 @@ if sys.platform == 'linux':
     # 修复在 WSL、虚拟机或部分 Wayland/NVIDIA 环境下由于显卡渲染透传失败导致的 "Could not initialize GLX" 闪退
     os.environ["QT_XCB_GL_INTEGRATION"] = "none"
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox"
+elif sys.platform == 'win32':
+    # 修复 Win10 下老旧显卡驱动/核显导致的 QtWebEngine 白屏问题
+    # 强制 Qt 使用软件渲染或 ANGLE (DirectX 转换层)
+    os.environ["QT_OPENGL"] = "software"
+    # 彻底禁用 Chromium 底层的 GPU 硬件加速
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
 elif sys.platform == 'darwin':
     # macOS: 使用原生 cocoa 后端
     os.environ["QT_QPA_PLATFORM"] = "cocoa"
