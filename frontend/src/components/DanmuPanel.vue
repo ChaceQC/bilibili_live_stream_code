@@ -96,7 +96,7 @@ onActivated(() => {
 
     <div class="message-list" ref="messageListRef" @scroll="handleScroll">
       <TransitionGroup name="msg-anim">
-        <div v-for="(msg, index) in messages" :key="index" class="message-row">
+        <div v-for="(msg, index) in messages" :key="index" class="message-row" :class="{ 'is-danmu': msg.type === 'danmu' }">
 
           <template v-if="msg.type === 'danmu'">
             <div class="avatar-col">
@@ -134,7 +134,6 @@ onActivated(() => {
       </TransitionGroup>
     </div>
 
-    <!-- 发送区域 -->
     <div class="send-area">
       <input
         type="text"
@@ -220,7 +219,8 @@ onActivated(() => {
 /* === QQ 风格核心样式 === */
 
 /* 1. 弹幕布局：Flex Row */
-.message-row:has(.avatar-col) {
+/* [修改点 2] 移除不兼容的 :has 选择器，使用更通用的 class 选择器 */
+.message-row.is-danmu {
   flex-direction: row;
   align-items: flex-start;
 }
