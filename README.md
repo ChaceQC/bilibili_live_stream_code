@@ -112,6 +112,7 @@
 
 1. 支持推流码类型：RTMP和SRT；
 2. 因为本人穷，用不起mac，mac用户可以自行进行测试，如果调试到可以正常运行，欢迎提交pr；
+3. 社区已有基于本项目的 Tauri 重构版本，技术栈从 Python + PyInstaller 迁移至 **Tauri 2.x (Rust) + React 18 + TypeScript**，并补全了 macOS 端的适配（含托盘、窗口退出、深色模式等）。有需要的同学可以移步 [Zeppelinpp/bilibili-streamer](https://github.com/Zeppelinpp/bilibili-streamer) 查看。
 
 ### ⭐ Star 历史
 
