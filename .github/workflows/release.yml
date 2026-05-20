@@ -229,11 +229,91 @@ jobs:
       contents: write
 
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # 必须拉取所有历史记录以便对比 tag
 
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
         path: artifacts
+
+    - name: Get Raw Git Changelog
+      id: raw_changelog
+      run: |
+        # 获取上次的 tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        if [ -z "$PREVIOUS_TAG" ]; then
+          LOGS=$(git log --no-merges --pretty=format:"- %s" | grep -v "chore: update VERSION")
+        else
+          LOGS=$(git log --no-merges --pretty=format:"- %s" $PREVIOUS_TAG..HEAD | grep -v "chore: update VERSION")
+        fi
+        
+        # 将原始日志写入环境变量
+        echo "RAW_CHANGELOG<<EOF" >> $GITHUB_ENV
+        echo "$LOGS" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Summarize Changelog with DeepSeek
+      id: ai_summary
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        # 使用内置的 python3 发送请求给 DeepSeek
+        python3 -c "
+        import os, json, urllib.request
+        
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        raw_log = os.environ.get('RAW_CHANGELOG', '').strip()
+        env_file = os.environ.get('GITHUB_ENV')
+        
+        def write_env(content):
+            with open(env_file, 'a', encoding='utf-8') as f:
+                f.write('AI_CHANGELOG<<EOF\n')
+                f.write(content + '\n')
+                f.write('EOF\n')
+        
+        if not api_key or not raw_log:
+            print('Missing API Key or empty changelog. Using raw logs.')
+            write_env(raw_log if raw_log else 'No changes detected.')
+            exit(0)
+            
+        prompt = f'''请作为一名专业的产品经理，将以下原始的 git commit 日志总结为一份面向普通用户的版本更新说明 (Release Notes)。
+        要求：
+        1. 忽略纯代码格式化、错别字修改或无意义的琐碎提交。
+        2. 将更新内容分类，例如使用：'✨ 新特性', '🐛 问题修复', '🔧 体验优化' 等标题。
+        3. 语气要友好、专业，排版使用 Markdown 格式。
+        4. 直接输出总结内容，不要包含多余的寒暄语。
+        
+        原始日志如下：\n{raw_log}'''
+        
+        url = 'https://api.deepseek.com/chat/completions'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {api_key}'
+        }
+        data = {
+            'model': 'deepseek-v4-flash',
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': 0.3
+        }
+        
+        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
+        try:
+            with urllib.request.urlopen(req) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                ai_reply = result['choices'][0]['message']['content']
+                print('Successfully generated AI summary.')
+                write_env(ai_reply)
+        except Exception as e:
+            print(f'Failed to call DeepSeek API: {e}')
+            print('Falling back to raw logs.')
+            write_env(raw_log)
+        "
+      shell: bash
 
     - name: Create Release and Upload Assets
       uses: softprops/action-gh-release@v1
@@ -242,21 +322,25 @@ jobs:
         body: |
           ## 🚀 BiliLiveTool ${{ github.ref_name }} 发布
           
+          ${{ env.AI_CHANGELOG }}
+          
+          ---
+          
           ### 📦 下载地址
-          请根据您的系统选择：
-          - **Windows**: 下载 `.zip` 解压使用
+          请根据您的系统选择对应的版本进行下载：
+          - **Windows**: 下载 `.zip` 解压即用
           - **macOS**: 下载 `.zip` 解压运行
-          - **Linux**: 下载 `.tar.gz`
+          - **Linux**: 下载 `.tar.gz` 解压使用
 
           ### 🛡️ Windows 用户安全提示
           如果您在 Windows 上运行遇到 **"Windows 已保护你的电脑"** (SmartScreen) 蓝框提示：
           1. 点击 **"更多信息" (More Info)**
           2. 点击 **"仍要运行" (Run Anyway)**
           
-          > 这是因为开源软件未购买昂贵的数字证书，属于正常现象，请放心使用。
+          > 💡 这是因为开源软件通常未购买数字签名证书，属于正常拦截现象，请放心使用。
 
         draft: false
         prerelease: false
-        generate_release_notes: true
+        generate_release_notes: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
