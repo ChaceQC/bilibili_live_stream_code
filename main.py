@@ -3,30 +3,18 @@ import sys
 
 # [修复] 根据平台设置不同的环境变量
 if sys.platform == 'linux':
-    # Linux: 强制使用 x11 后端 (XWayland)
-    # 1. GDK_BACKEND=x11: 修复 Wayland 下 GTK 托盘初始化崩溃 "Can't create GtkStyleContext without display"
-    # 2. QT_QPA_PLATFORM=xcb: 强制 Qt 使用 X11 后端，确保窗口拖动 (window.move) 和位置控制在 Wayland 下正常工作
     os.environ["GDK_BACKEND"] = "x11"
     os.environ["QT_QPA_PLATFORM"] = "xcb"
-    # [Fix] 强制使用 Fusion 风格，防止 Qt 尝试加载 GTK 主题 (QGtkStyle) 导致崩溃
     os.environ["QT_STYLE_OVERRIDE"] = "Fusion"
-    # [Fix] 禁用平台主题插件 (如 qt5ct, gtk2)，防止它们加载 GTK
     if "QT_QPA_PLATFORMTHEME" in os.environ:
         del os.environ["QT_QPA_PLATFORMTHEME"]
-    # [Fix] 新增：彻底禁用 GLX 和 WebEngine/Chromium 的 GPU 加速
-    # 修复在 WSL、虚拟机或部分 Wayland/NVIDIA 环境下由于显卡渲染透传失败导致的 "Could not initialize GLX" 闪退
     os.environ["QT_XCB_GL_INTEGRATION"] = "none"
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox"
 elif sys.platform == 'win32':
-    # 修复 Win10 下老旧显卡驱动/核显导致的 QtWebEngine 白屏问题
-    # 强制 Qt 使用软件渲染或 ANGLE (DirectX 转换层)
     os.environ["QT_OPENGL"] = "software"
-    # 彻底禁用 Chromium 底层的 GPU 硬件加速
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
 elif sys.platform == 'darwin':
-    # macOS: 使用原生 cocoa 后端
     os.environ["QT_QPA_PLATFORM"] = "cocoa"
-    # 禁用 GTK 后端
     if "QT_QPA_PLATFORMTHEME" in os.environ:
         del os.environ["QT_QPA_PLATFORMTHEME"]
 
@@ -184,12 +172,9 @@ if __name__ == '__main__':
                     # GWL_STYLE = -16
                     user32 = ctypes.windll.user32
                     style = user32.GetWindowLongW(hwnd, -16)
-                    
-                    # 1. 去除 WS_THICKFRAME (0x00040000) 以消除顶部白条
-                    #    之前的尝试中添加了这个样式导致了白条
+
                     style &= ~0x00040000
-                    
-                    # 2. 添加 WS_MINIMIZEBOX (0x00020000) 以支持任务栏点击最小化
+
                     style |= 0x00020000 
                     
                     user32.SetWindowLongW(hwnd, -16, style)
@@ -202,7 +187,6 @@ if __name__ == '__main__':
 
         window.show()
 
-        # [Fix] Linux (Qt backend): 防止隐藏最后一个窗口时 Qt 自动退出
         if sys.platform != 'win32':
             try:
                 from qtpy.QtWidgets import QApplication
