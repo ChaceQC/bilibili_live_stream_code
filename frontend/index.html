@@ -14,15 +14,19 @@
         --bili-font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
       }
 
-      body, html, #app {
+      *, *::before, *::after {
         font-family: var(--bili-font) !important;
+      }
+
+      .logs, .logs *, .gemini-input {
+        font-family: monospace !important;
+      }
+
+      body, html, #app {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
 
-      button, input, select, textarea {
-        font-family: inherit;
-      }
     </style>
   </head>
   <body>
