@@ -7,7 +7,7 @@ if sys.platform == 'linux':
     os.environ["QT_QPA_PLATFORM"] = "xcb"
     os.environ["QT_STYLE_OVERRIDE"] = "Fusion"
     if "QT_QPA_PLATFORMTHEME" in os.environ:
-        del os.environ["QT_QPA_PLATFORMTHEME"]
+        os.environ["QT_QPA_PLATFORMTHEME"] = ""
     os.environ["QT_XCB_GL_INTEGRATION"] = "none"
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox"
 elif sys.platform == 'win32':
