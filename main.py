@@ -4,7 +4,7 @@ import sys
 # [修复] 根据平台设置不同的环境变量
 if sys.platform == 'linux':
     # os.environ["GDK_BACKEND"] = "x11"
-    # os.environ["QT_QPA_PLATFORM"] = "xcb"
+    os.environ["QT_QPA_PLATFORM"] = "wayland"
     # os.environ["QT_STYLE_OVERRIDE"] = "Fusion"
     # if "QT_QPA_PLATFORMTHEME" in os.environ:
     #     os.environ["QT_QPA_PLATFORMTHEME"] = ""
