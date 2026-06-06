@@ -1,16 +1,39 @@
 import os
 import sys
 
+def _set_env_default(name, value):
+    if not os.environ.get(name):
+        os.environ[name] = value
+
+def _append_env_flags(name, flags):
+    current = os.environ.get(name, "")
+    parts = current.split()
+    for flag in flags:
+        if flag not in parts:
+            parts.append(flag)
+    os.environ[name] = " ".join(parts)
+
+def _configure_linux_environment():
+    # 保留用户桌面会话中的输入法/主题环境变量，避免破坏 fcitx/ibus 等输入法。
+    _set_env_default("GDK_BACKEND", "x11")
+    _set_env_default("QT_QPA_PLATFORM", "xcb")
+    _set_env_default("QT_STYLE_OVERRIDE", "Fusion")
+    if os.environ.get("XDG_SESSION_TYPE") == "cxb":
+        os.environ["XDG_SESSION_TYPE"] = "x11"
+    else:
+        _set_env_default("XDG_SESSION_TYPE", "x11")
+    _set_env_default("QT_XCB_GL_INTEGRATION", "none")
+    _set_env_default("QT_ENABLE_HIGHDPI_SCALING", "1")
+    _set_env_default("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+    _set_env_default("QT_SCALE_FACTOR_ROUNDING_POLICY", "PassThrough")
+    _append_env_flags(
+        "QTWEBENGINE_CHROMIUM_FLAGS",
+        ["--disable-gpu", "--no-sandbox", "--enable-features=UseOzonePlatform", "--ozone-platform=x11"]
+    )
+
 # [修复] 根据平台设置不同的环境变量
 if sys.platform == 'linux':
-    os.environ["GDK_BACKEND"] = "x11"
-    os.environ["QT_QPA_PLATFORM"] = "xcb"
-    os.environ["QT_STYLE_OVERRIDE"] = "Fusion"
-    os.environ["XDG_SESSION_TYPE"] = "cxb"
-    if "QT_QPA_PLATFORMTHEME" in os.environ:
-        os.environ["QT_QPA_PLATFORMTHEME"] = ""
-    os.environ["QT_XCB_GL_INTEGRATION"] = "none"
-    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox --enable-features=UseOzonePlatform --ozone-platform=x11"
+    _configure_linux_environment()
 elif sys.platform == 'win32':
     os.environ["QT_OPENGL"] = "software"
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
@@ -115,6 +138,16 @@ def _get_primary_monitor_scale_win():
     except Exception:
         return 1.0
 
+def _enable_qt_high_dpi_scaling():
+    try:
+        from qtpy.QtCore import QCoreApplication, Qt
+        if hasattr(Qt, "AA_EnableHighDpiScaling"):
+            QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        if hasattr(Qt, "AA_UseHighDpiPixmaps"):
+            QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    except Exception:
+        pass
+
 if __name__ == '__main__':
     api = ApiService()
     window_width = 1000
@@ -123,6 +156,8 @@ if __name__ == '__main__':
     if sys.platform == 'win32':
         _enable_windows_dpi_awareness()
         scale = _get_primary_monitor_scale_win()
+    elif sys.platform == 'linux':
+        _enable_qt_high_dpi_scaling()
     window = webview.create_window(
         'B站直播工具',
         url=get_html_path(),
