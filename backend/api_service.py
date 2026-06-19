@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import threading
+import sys
 from backend.bilibili_api import BilibiliApi
 from backend.config import Config
 from backend.state import SessionState
@@ -81,7 +82,16 @@ class ApiService:
     # --- Window Proxy Methods ---
     def window_min(self): return self.window_service.window_min()
     def window_max(self): return self.window_service.window_max()
-    def window_close(self): 
+    def window_close(self):
+        if self.config_manager.data.get("min_to_tray", True):
+            self.config_manager.save()
+            self.window_service.send_to_frontend("onAppHidden", None)
+            if sys.platform == 'win32':
+                self.window_service.window_hide()
+            else:
+                self.window_service.window_min()
+            return True
+
         # 只有在直播状态下才尝试停止直播
         if self.session_state.is_live:
             self.live_service.stop_live()
@@ -109,7 +119,9 @@ class ApiService:
 
     # --- Live Proxy Methods ---
     def get_partitions(self): return self.live_service.get_partitions()
+    def sync_room_profile(self): return self.live_service.sync_room_profile()
     def update_title(self, title): return self.live_service.update_title(title)
+    def update_announcement(self, announcement): return self.live_service.update_announcement(announcement)
     def update_area(self, p_name, s_name): return self.live_service.update_area(p_name, s_name)
     def start_live(self, p_name=None, s_name=None): 
         res = self.live_service.start_live(p_name, s_name)

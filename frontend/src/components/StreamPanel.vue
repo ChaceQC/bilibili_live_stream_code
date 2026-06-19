@@ -7,7 +7,7 @@ const props = defineProps(['formData', 'liveState']);
 const emit = defineEmits(['stream-start', 'stream-stop', 'update-form']);
 const showModal = inject('showModal');
 
-const { getPartitions, updateSettings, toggleLive } = useBridge();
+const { getPartitions, updateSettings, toggleLive, syncRoomProfile } = useBridge();
 const partitions = ref({});
 const loading = ref(false);
 
@@ -29,11 +29,34 @@ const doManualUpdate = async (type) => {
     const res = await updateSettings('title', props.formData.title);
     if (res.success) showModal('成功', '直播标题已更新', 'success');
     else showModal('失败', res.msg, 'error');
+  } else if (type === 'announcement') {
+    const res = await updateSettings('announcement', props.formData.announcement || '');
+    if (res.success) showModal('成功', '主播公告已更新', 'success');
+    else showModal('失败', res.msg, 'error');
   } else if (type === 'area') {
     if(!props.formData.area || !props.formData.subArea) return showModal('错误', '请选择完整分区', 'error');
     const res = await updateSettings('area', props.formData.area, props.formData.subArea);
     if (res.success) showModal('成功', '直播分区已更新', 'success');
     else showModal('失败', res.msg, 'error');
+  }
+};
+
+const doSyncRoomProfile = async () => {
+  const res = await syncRoomProfile();
+  if (res.success && res.data) {
+    if (Object.prototype.hasOwnProperty.call(res.data, 'last_title')) {
+      updateLocal('title', res.data.last_title || '');
+    }
+    if (Object.prototype.hasOwnProperty.call(res.data, 'last_announcement')) {
+      updateLocal('announcement', res.data.last_announcement || '');
+    }
+    if (Array.isArray(res.data.last_area_name)) {
+      updateLocal('area', res.data.last_area_name[0] || '');
+      updateLocal('subArea', res.data.last_area_name[1] || '');
+    }
+    showModal('成功', '已同步房间标题和主播公告', 'success');
+  } else {
+    showModal('同步失败', res.msg || '未知错误', 'error');
   }
 };
 
@@ -69,6 +92,12 @@ const doToggle = async () => {
         }
         await sleep(200); // 间隔 0.2s
       }
+
+      const announcementRes = await updateSettings('announcement', props.formData.announcement || '');
+      if (!announcementRes.success) {
+        throw new Error(`主播公告更新失败: ${announcementRes.msg}`);
+      }
+      await sleep(200);
 
       // 3. 发起开播请求
       const res = await toggleLive(true, props.formData.area, props.formData.subArea);
@@ -117,6 +146,22 @@ const subPartitions = computed(() => {
       </div>
 
       <div class="input-group" style="margin-top: 20px;">
+        <label class="label">主播公告</label>
+        <div class="row">
+          <input
+            :value="formData.announcement"
+            @input="updateLocal('announcement', $event.target.value)"
+            class="gemini-input"
+            maxlength="60"
+            placeholder="输入主播公告，留空则隐藏..."
+          >
+          <button class="btn btn-secondary action-btn" @click="doManualUpdate('announcement')" title="仅更新主播公告">
+            更新
+          </button>
+        </div>
+      </div>
+
+      <div class="input-group" style="margin-top: 20px;">
         <label class="label">直播分区</label>
         <div class="row multi-select">
           <select :value="formData.area" @change="updateLocal('area', $event.target.value)" class="gemini-input select-box">
@@ -131,6 +176,12 @@ const subPartitions = computed(() => {
             同步
           </button>
         </div>
+      </div>
+
+      <div class="sync-row">
+        <button class="btn btn-secondary sync-btn" @click="doSyncRoomProfile">
+          从B站同步房间标题和主播公告
+        </button>
       </div>
     </div>
 
@@ -148,7 +199,7 @@ const subPartitions = computed(() => {
         </template>
       </button>
       <p v-if="!liveState.isLive" class="hint">
-        <span class="info-icon">i</span> 点击开始将自动同步标题
+        <span class="info-icon">i</span> 点击开始将自动同步标题和主播公告
       </p>
     </div>
   </div>
@@ -225,6 +276,18 @@ const subPartitions = computed(() => {
 .multi-select {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
+}
+
+.sync-row {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sync-btn {
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 
 .select-box {

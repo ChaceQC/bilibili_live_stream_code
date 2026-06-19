@@ -46,7 +46,8 @@ class UserService:
             "bcoin": wallet.get("bcoin_balance", 0), "following": stat.get("following", 0),
             "follower": stat.get("follower", 0), "dynamic_count": stat.get("dynamic_count", 0),
             "last_title": old_data.get("last_title", ""), "last_area_id": old_data.get("last_area_id", ""),
-            "last_area_name": old_data.get("last_area_name", [])
+            "last_area_name": old_data.get("last_area_name", []),
+            "last_announcement": old_data.get("last_announcement", "")
         }
         config_data["users"][uid] = new_data
         config_data["current_uid"] = uid

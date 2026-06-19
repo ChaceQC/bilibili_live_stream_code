@@ -18,6 +18,11 @@ class WindowService:
         if window:
             window.minimize()
 
+    def window_hide(self):
+        window = self._get_window()
+        if window:
+            window.hide()
+
     def window_max(self):
         window = self._get_window()
         if window:

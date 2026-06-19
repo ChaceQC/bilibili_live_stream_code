@@ -55,12 +55,14 @@ def get_log_path():
 # 配置日志
 log_file = get_log_path()
 file_handler = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=3, encoding='utf-8')
-stream_handler = logging.StreamHandler(sys.stdout)
+handlers = [file_handler]
+if sys.stdout:
+    handlers.append(logging.StreamHandler(sys.stdout))
 
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)-15s - %(levelname)-8s - %(message)s',
-    handlers=[file_handler, stream_handler]
+    handlers=handlers
 )
 # 屏蔽 urllib3 的 DEBUG 日志
 logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -505,4 +507,3 @@ if __name__ == '__main__':
     # Windows 保持默认 (Edge/CEF)
     gui_backend = 'qt' if sys.platform != 'win32' else None
     webview.start(on_app_start, window, gui=gui_backend)
-
