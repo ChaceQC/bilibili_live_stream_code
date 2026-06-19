@@ -80,7 +80,8 @@ class Config:
                                         "cookie": data.get("cookie", ""), "roomId": data.get("roomId", ""),
                                         "csrf": data.get("csrf", ""), "last_title": data.get("last_title", ""),
                                         "last_area_id": data.get("last_area_id", ""),
-                                        "last_area_name": data.get("last_area_name", [])
+                                        "last_area_name": data.get("last_area_name", []),
+                                        "last_announcement": data.get("last_announcement", "")
                                     }
                                 },
                                 "current_uid": uid,

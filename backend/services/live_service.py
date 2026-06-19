@@ -48,19 +48,74 @@ class LiveService:
         data = {p: list(s.keys()) for p, s in self.partition_map.items()}
         return {"code": 0, "data": data}
 
+    def _save_current_user_fields(self, fields):
+        uid = self.config_manager.data.get("current_uid")
+        if uid:
+            uid = str(uid)
+            if uid in self.config_manager.data["users"]:
+                self.config_manager.data["users"][uid].update(fields)
+                self.config_manager.save()
+
+    def sync_room_profile(self):
+        if not self.state.room_id or not self.state.uid:
+            return {"code": -1, "msg": "请先登录"}
+
+        data = {}
+        success, res = self.api.get_room_info(self.state.room_id)
+        if success and res.get('code') == 0:
+            room = res.get('data', {})
+            area_id = room.get('area_id') or room.get('area_v2_id')
+            parent_area_name = room.get('parent_area_name') or room.get('parent_area_v2_name')
+            area_name = room.get('area_name') or room.get('area_v2_name')
+
+            data["last_title"] = room.get('title', '') or ''
+            if area_id:
+                self.state.current_area_id = str(area_id)
+                data["last_area_id"] = str(area_id)
+            if parent_area_name and area_name:
+                area_names = [parent_area_name, area_name]
+                self.state.current_area_names = area_names
+                data["last_area_name"] = area_names
+        else:
+            logger.warning(f"Sync room info failed: {res}")
+
+        success, res = self.api.get_room_news(self.state.room_id, self.state.uid)
+        if success and res.get('code') == 0:
+            news = res.get('data') or {}
+            data["last_announcement"] = news.get('content', '') if isinstance(news, dict) else ''
+        else:
+            logger.warning(f"Sync room news failed: {res}")
+
+        if not data:
+            return {"code": -1, "msg": "同步直播信息失败"}
+
+        self._save_current_user_fields(data)
+        return {"code": 0, "data": data}
+
     def update_title(self, title):
         logger.info(f"Updating title to: {title}")
         if not self.config_manager.data.get("current_uid"): return {"code": -1, "msg": "未登录"}
         success, res = self.api.update_title(self.state.room_id, title, self.state.csrf)
         if success and res['code'] == 0:
-            uid = self.config_manager.data.get("current_uid")
-            if uid:
-                uid = str(uid)
-                if uid in self.config_manager.data["users"]:
-                    self.config_manager.data["users"][uid]["last_title"] = title
-                    self.config_manager.save()
+            self._save_current_user_fields({"last_title": title})
             return {"code": 0}
         logger.error(f"Update title failed: {res}")
+        return {"code": -1, "msg": res.get('msg')}
+
+    def update_announcement(self, announcement):
+        logger.info("Updating announcement...")
+        if not self.config_manager.data.get("current_uid"):
+            return {"code": -1, "msg": "未登录"}
+        success, res = self.api.update_announcement(
+            self.state.room_id,
+            self.state.uid,
+            announcement,
+            self.state.csrf
+        )
+        if success and res['code'] == 0:
+            self._save_current_user_fields({"last_announcement": announcement})
+            return {"code": 0}
+        logger.error(f"Update announcement failed: {res}")
         return {"code": -1, "msg": res.get('msg')}
 
     def update_area(self, p_name, s_name):

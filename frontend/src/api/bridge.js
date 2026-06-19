@@ -103,11 +103,24 @@ export const useBridge = () => {
       return res.code === 0 ? res.data : {};
     },
 
+    async syncRoomProfile() {
+      log('正在同步直播信息...');
+      const res = await callPy('sync_room_profile');
+      if (res.code === 0) {
+        log('直播信息同步成功');
+        return { success: true, data: res.data };
+      }
+      log(`直播信息同步失败: ${res.msg}`);
+      return { success: false, msg: res.msg };
+    },
+
     async updateSettings(type, val1, val2) {
       log(`正在更新${type}...`);
       let res;
       if (type === 'title') {
         res = await callPy('update_title', val1);
+      } else if (type === 'announcement') {
+        res = await callPy('update_announcement', val1);
       } else {
         res = await callPy('update_area', val1, val2);
       }

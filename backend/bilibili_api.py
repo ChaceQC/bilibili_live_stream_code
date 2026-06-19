@@ -169,9 +169,20 @@ class BilibiliApi:
     def get_area_list(self):
         return self._req("GET", "https://api.live.bilibili.com/room/v1/Area/getList", params={"show_pinyin": 1})
 
+    def get_room_info(self, room_id):
+        return self._req("GET", "https://api.live.bilibili.com/room/v1/Room/get_info", params={"room_id": room_id})
+
+    def get_room_news(self, room_id, uid):
+        params = {'room_id': room_id, 'uid': uid}
+        return self._req("GET", "https://api.live.bilibili.com/xlive/app-blink/v1/index/getRoomNews", params=params)
+
     def update_title(self, room_id, title, csrf):
         data = {'room_id': room_id, 'platform': 'pc_link', 'title': title, 'csrf_token': csrf, 'csrf': csrf}
         return self._req("POST", "https://api.live.bilibili.com/room/v1/Room/update", data=data)
+
+    def update_announcement(self, room_id, uid, content, csrf):
+        data = {'room_id': room_id, 'uid': uid, 'content': content, 'csrf_token': csrf, 'csrf': csrf}
+        return self._req("POST", "https://api.live.bilibili.com/xlive/app-blink/v1/index/updateRoomNews", data=data)
 
     def update_area(self, room_id, area_id, csrf):
         data = {'room_id': room_id, 'area_id': area_id, 'platform': 'pc_link', 'csrf_token': csrf, 'csrf': csrf}

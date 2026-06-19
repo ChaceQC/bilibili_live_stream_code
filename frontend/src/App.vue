@@ -12,12 +12,12 @@ import MessageModal from '@/components/MessageModal.vue';
 import UserAccountModal from '@/components/UserAccountModal.vue';
 import WindowControls from '@/components/WindowControls.vue';
 
-const { loadSavedConfig, getWindowPosition, windowDrag, refreshCurrentUser } = useBridge();
+const { loadSavedConfig, getWindowPosition, windowDrag, refreshCurrentUser, syncRoomProfile } = useBridge();
 const activeTab = ref('account');
 const isInitializing = ref(true);
 
 const userInfo = reactive({ isLoggedIn: false, uname: '', face: '', level: 0, uid: '', money: 0, bcoin: 0, following: 0, follower: 0, dynamic_count: 0, current_exp: 0, next_exp: 0 });
-const globalForm = reactive({ roomId: '', cookie: '', csrf: '', title: '', area: '', subArea: '' });
+const globalForm = reactive({ roomId: '', cookie: '', csrf: '', title: '', announcement: '', area: '', subArea: '' });
 const liveState = reactive({ isLive: false, rtmp1: {}, rtmp2: {}, srt: {} });
 
 // 托盘人脸认证弹窗状态
@@ -46,6 +46,26 @@ const tryRefreshUserInfo = async (force = false) => {
     }
   } catch (e) {
     console.error('Refresh failed:', e);
+  }
+};
+
+const applyRoomProfile = (profile = {}) => {
+  if (Object.prototype.hasOwnProperty.call(profile, 'last_title')) {
+    globalForm.title = profile.last_title || '';
+  }
+  if (Object.prototype.hasOwnProperty.call(profile, 'last_announcement')) {
+    globalForm.announcement = profile.last_announcement || '';
+  }
+  if (Array.isArray(profile.last_area_name)) {
+    globalForm.area = profile.last_area_name[0] || '';
+    globalForm.subArea = profile.last_area_name[1] || '';
+  }
+};
+
+const syncRoomProfileToForm = async () => {
+  const res = await syncRoomProfile();
+  if (res.success && res.data) {
+    applyRoomProfile(res.data);
   }
 };
 
@@ -100,6 +120,7 @@ onMounted(async () => {
       fillUserState(user);
       // 启动应用时尝试更新
       await tryRefreshUserInfo();
+      await syncRoomProfileToForm();
     }
   } catch (e) { console.error(e); } finally { isInitializing.value = false; }
 
@@ -143,14 +164,15 @@ onUnmounted(() => {
 
 const fillUserState = (user) => {
   Object.assign(userInfo, { isLoggedIn: true, uname: user.uname, face: user.face, level: user.level, uid: user.uid, money: user.money, bcoin: user.bcoin, following: user.following, follower: user.follower, dynamic_count: user.dynamic_count, current_exp: user.current_exp, next_exp: user.next_exp });
-  globalForm.roomId = user.roomId || ''; globalForm.cookie = user.cookie || ''; globalForm.csrf = user.csrf || ''; globalForm.title = user.last_title || '';
+  globalForm.roomId = user.roomId || ''; globalForm.cookie = user.cookie || ''; globalForm.csrf = user.csrf || ''; globalForm.title = user.last_title || ''; globalForm.announcement = user.last_announcement || '';
   if (user.last_area_name && Array.isArray(user.last_area_name)) { globalForm.area = user.last_area_name[0]; globalForm.subArea = user.last_area_name[1]; }
   activeTab.value = 'stream';
 };
 
-const onLoginSuccess = (data) => {
+const onLoginSuccess = async (data) => {
   fillUserState(data);
   lastRefreshTime = Date.now(); // 登录成功视为已刷新
+  await syncRoomProfileToForm();
 };
 
 const onSwitchAccount = (data) => {
@@ -158,9 +180,10 @@ const onSwitchAccount = (data) => {
   showModal('提示', `已切换: ${data.uname}`, 'success');
   lastRefreshTime = 0; // 切换账号后重置冷却，允许立即刷新一次
   tryRefreshUserInfo();
+  syncRoomProfileToForm();
 };
 
-const onLogout = () => { Object.assign(userInfo, { isLoggedIn: false }); globalForm.roomId = ''; globalForm.cookie = ''; globalForm.csrf = ''; activeTab.value = 'account'; showModal('提示', '已退出登录', 'info'); };
+const onLogout = () => { Object.assign(userInfo, { isLoggedIn: false }); globalForm.roomId = ''; globalForm.cookie = ''; globalForm.csrf = ''; globalForm.title = ''; globalForm.announcement = ''; activeTab.value = 'account'; showModal('提示', '已退出登录', 'info'); };
 const updateForm = (key, value) => { globalForm[key] = value; };
 
 const handleSidebarAccountClick = () => {
