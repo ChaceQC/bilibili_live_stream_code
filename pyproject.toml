@@ -9,6 +9,7 @@ dependencies = [
     "protobuf",
     "brotlipy",
     "aiohttp",
+    "certifi",
     "Pillow",
     "qtpy>=2.4.0",
     "PyQt5>=5.15.0",
