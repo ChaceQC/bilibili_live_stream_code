@@ -1,16 +1,32 @@
 import os
 import sys
 
+
+def _append_env_flags(name, *flags):
+    current_flags = os.environ.get(name, "").split()
+    for flag in flags:
+        if flag not in current_flags:
+            current_flags.append(flag)
+    os.environ[name] = " ".join(current_flags)
+
+
 # [修复] 根据平台设置不同的环境变量
 if sys.platform == 'linux':
-    os.environ["GDK_BACKEND"] = "x11"
-    os.environ["QT_QPA_PLATFORM"] = "xcb"
-    os.environ["QT_STYLE_OVERRIDE"] = "Fusion"
-    os.environ["XDG_SESSION_TYPE"] = "cxb"
+    is_wayland = (
+        os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+        or bool(os.environ.get("WAYLAND_DISPLAY"))
+    )
+    if is_wayland:
+        os.environ.setdefault("GDK_BACKEND", "wayland,x11")
+        os.environ.setdefault("QT_QPA_PLATFORM", "wayland;xcb")
+    else:
+        os.environ.setdefault("GDK_BACKEND", "x11")
+        os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+    os.environ.setdefault("QT_STYLE_OVERRIDE", "Fusion")
     if "QT_QPA_PLATFORMTHEME" in os.environ:
         os.environ["QT_QPA_PLATFORMTHEME"] = ""
-    os.environ["QT_XCB_GL_INTEGRATION"] = "none"
-    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox --enable-features=UseOzonePlatform --ozone-platform=x11"
+    # QtWebEngine 5.15 可能不支持显式 ozone 参数，这里交给 Qt 自行选择 Wayland/X11。
+    _append_env_flags("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu", "--no-sandbox")
 elif sys.platform == 'win32':
     os.environ["QT_OPENGL"] = "software"
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
