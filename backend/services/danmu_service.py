@@ -4,9 +4,11 @@ import logging
 import struct
 import zlib
 import base64
+import ssl
 
 import brotli
 import aiohttp
+import certifi
 from backend import get_wbi
 from backend import util
 from backend import dm_pb2
@@ -187,8 +189,10 @@ class DanmuService:
         ws_url = f"wss://{host_list[0]['host']}:{host_list[0]['wss_port']}/sub"
         
         try:
+            # PyInstaller 打包后默认 CA 路径可能来自构建机，使用 certifi 保证 WSS 校验一致。
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
             self.session = aiohttp.ClientSession()
-            self.ws = await self.session.ws_connect(ws_url, headers=self.api.headers)
+            self.ws = await self.session.ws_connect(ws_url, headers=self.api.headers, ssl=ssl_context)
             
             # 发送认证包
             auth_data = {
