@@ -2,8 +2,8 @@
 import { ref, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue';
 import { useBridge } from '@/api/bridge';
 
-const { startDanmuMonitor, sendDanmu } = useBridge();
-const messages = ref([]);
+const { state, startDanmuMonitor, sendDanmu } = useBridge();
+const messages = state.danmuMessages;
 const messageListRef = ref(null);
 const inputRef = ref(null);
 const isAutoScroll = ref(true);
@@ -16,17 +16,11 @@ const focusInput = () => {
 };
 
 const addMessage = (data) => {
-  messages.value.push(data);
-  // 限制消息数量，防止内存溢出
-  if (messages.value.length > 200) {
-    messages.value.shift();
-  }
-
+  state.danmuMessages.push(data);
+  if (state.danmuMessages.length > 200) state.danmuMessages.shift();
   if (isAutoScroll.value) {
     nextTick(() => {
-      if (messageListRef.value) {
-        scrollToBottom();
-      }
+      if (messageListRef.value) scrollToBottom();
     });
   }
 };
@@ -81,10 +75,10 @@ const handleSend = async () => {
 // onActivated 会在每次切换到弹幕 Tab 时触发，确保弹幕能重新连接
 onActivated(() => {
   isActive = true;
-  nextTick(focusInput);
-  window.onDanmuMessage = (data) => {
-    addMessage(data);
-  };
+  nextTick(() => {
+    focusInput();
+    if (isAutoScroll.value) scrollToBottom();
+  });
   window.addEventListener('focus', focusInput);
   startDanmuMonitor();
 });
