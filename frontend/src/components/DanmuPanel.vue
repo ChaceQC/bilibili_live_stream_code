@@ -1,13 +1,19 @@
 <script setup>
-import { ref, onActivated, nextTick } from 'vue';
+import { ref, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue';
 import { useBridge } from '@/api/bridge';
 
 const { startDanmuMonitor, sendDanmu } = useBridge();
 const messages = ref([]);
 const messageListRef = ref(null);
+const inputRef = ref(null);
 const isAutoScroll = ref(true);
 const inputMsg = ref('');
 const sending = ref(false);
+let isActive = false;
+
+const focusInput = () => {
+  if (isActive) inputRef.value?.focus();
+};
 
 const addMessage = (data) => {
   messages.value.push(data);
@@ -74,13 +80,24 @@ const handleSend = async () => {
 // 因为父组件使用了 KeepAlive，onMounted 只会在第一次进入时触发
 // onActivated 会在每次切换到弹幕 Tab 时触发，确保弹幕能重新连接
 onActivated(() => {
+  isActive = true;
+  nextTick(focusInput);
   window.onDanmuMessage = (data) => {
     addMessage(data);
   };
+  window.addEventListener('focus', focusInput);
   startDanmuMonitor();
 });
 
 // 切出弹幕 Tab 时不停止弹幕连接，让弹幕在后台持续运行
+onDeactivated(() => {
+  isActive = false;
+  window.removeEventListener('focus', focusInput);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('focus', focusInput);
+});
 </script>
 
 <template>
@@ -136,6 +153,7 @@ onActivated(() => {
 
     <div class="send-area">
       <input
+        ref="inputRef"
         type="text"
         v-model="inputMsg"
         @keyup.enter="handleSend"
