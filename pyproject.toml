@@ -1,6 +1,6 @@
 [project]
 name = "bilibili-live-stream-code"
-version = "2.3.13"
+version = "2.3.17"
 requires-python = ">=3.12"
 dependencies = [
     "pywebview",

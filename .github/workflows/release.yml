@@ -33,13 +33,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest, windows-latest]
+        os: [ubuntu-22.04, macos-15-intel, windows-latest]
         include:
           - os: ubuntu-22.04
             asset_name_suffix: linux-amd64
             pyinstaller_options: ""
             icon_ext: "png"
-          - os: macos-latest
+          - os: macos-15-intel
             asset_name_suffix: macos-amd64
             pyinstaller_options: "--windowed"
             icon_ext: "icns"
@@ -52,7 +52,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: master
+        ref: ${{ github.sha }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -85,7 +85,7 @@ jobs:
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
     - name: Prepare Platform Icon
       run: |
-        if [ "${{ matrix.os }}" == "macos-latest" ]; then
+        if [ "${{ matrix.os }}" == "macos-15-intel" ]; then
           echo "Converting ICO to ICNS for macOS..."
           sips -s format png bilibili.ico --out temp_icon.png
           mkdir bilibili.iconset
@@ -181,7 +181,7 @@ jobs:
             --hidden-import qtpy \
             --hidden-import PyQt5 \
             --hidden-import webview.platforms.qt
-        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+        elif [ "${{ matrix.os }}" == "macos-15-intel" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
               --onefile \
@@ -204,7 +204,7 @@ jobs:
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
           mv dist/$EXE_NAME .
           7z a $ASSET_NAME $EXE_NAME
-        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+        elif [ "${{ matrix.os }}" == "macos-15-intel" ]; then
           APP_NAME="BiliLiveTool.app"
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
           7z a -r $ASSET_NAME dist/$APP_NAME
