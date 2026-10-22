@@ -7,16 +7,25 @@ const props = defineProps(['formData', 'liveState']);
 const emit = defineEmits(['stream-start', 'stream-stop', 'update-form']);
 const showModal = inject('showModal');
 
-const { getPartitions, updateSettings, toggleLive, syncRoomProfile } = useBridge();
+const { getPartitions, updateSettings, toggleLive, syncRoomProfile, getAppConfig, setAppConfig, startDanmuMonitor } = useBridge();
 const partitions = ref({});
 const loading = ref(false);
+const autoConnectDanmu = ref(true);
 
 const showVerify = ref(false);
 const verifyQr = ref('');
 
 onMounted(async () => {
   partitions.value = await getPartitions();
+  const appConfig = await getAppConfig();
+  autoConnectDanmu.value = appConfig.auto_connect_danmu !== false;
 });
+
+const updateAutoConnectDanmu = async (event) => {
+  const value = event.target.checked;
+  autoConnectDanmu.value = value;
+  await setAppConfig('auto_connect_danmu', value);
+};
 
 const updateLocal = (key, val) => {
   emit('update-form', key, val);
@@ -103,6 +112,12 @@ const doToggle = async () => {
       const res = await toggleLive(true, props.formData.area, props.formData.subArea);
       if (res.success) {
         emit('stream-start', res.data);
+        if (autoConnectDanmu.value) {
+          const danmuRes = await startDanmuMonitor();
+          if (danmuRes.code !== 0) {
+            console.error('弹幕连接启动失败:', danmuRes.msg);
+          }
+        }
         showModal('成功', '开播成功！推流码已生成', 'success');
       } else if (res.needFaceVerify) {
         verifyQr.value = await QRCode.toDataURL(res.qrUrl, {width: 200, margin: 2});
@@ -186,6 +201,10 @@ const subPartitions = computed(() => {
     </div>
 
     <div class="action-section">
+      <label v-if="!liveState.isLive" class="auto-danmu-option">
+        <input type="checkbox" :checked="autoConnectDanmu" @change="updateAutoConnectDanmu">
+        <span>自动连接弹幕</span>
+      </label>
       <button
         class="btn start-btn"
         :class="liveState.isLive ? 'btn-stop' : 'btn-start'"
@@ -313,6 +332,23 @@ const subPartitions = computed(() => {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+}
+
+.auto-danmu-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-sub);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.auto-danmu-option input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary-color);
+  cursor: pointer;
 }
 
 .start-btn {

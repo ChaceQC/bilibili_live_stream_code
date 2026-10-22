@@ -162,6 +162,7 @@ class ApiService:
         has_tray = getattr(self, 'tray_active', False)
         config = {
             "min_to_tray": self.config_manager.data.get("min_to_tray", True),
+            "auto_connect_danmu": self.config_manager.data.get("auto_connect_danmu", True),
             "is_win32": sys.platform == 'win32',
             "has_tray": has_tray
         }
@@ -170,6 +171,10 @@ class ApiService:
     def set_app_config(self, key, value):
         if key == "min_to_tray":
             self.config_manager.data["min_to_tray"] = bool(value)
+            self.config_manager.save()
+            return {"code": 0}
+        if key == "auto_connect_danmu":
+            self.config_manager.data["auto_connect_danmu"] = bool(value)
             self.config_manager.save()
             return {"code": 0}
         return {"code": -1, "msg": "Unknown config key"}

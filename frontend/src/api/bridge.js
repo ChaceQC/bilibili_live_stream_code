@@ -1,6 +1,6 @@
 import { reactive } from 'vue';
 
-const state = reactive({ logs: [] });
+const state = reactive({ logs: [], danmuMessages: [] });
 
 const log = (msg) => {
   // 如果 msg 是对象，尝试转字符串，避免 [object Object]
@@ -24,6 +24,14 @@ const log = (msg) => {
 // 暴露给后端调用
 window.onBackendLog = (msg) => {
   log(msg);
+};
+
+// 弹幕监听在后台运行时也要缓存消息，切换页面后再由弹幕面板显示。
+window.onDanmuMessage = (data) => {
+  state.danmuMessages.push(data);
+  if (state.danmuMessages.length > 200) {
+    state.danmuMessages.shift();
+  }
 };
 
 // 等待 pywebview 就绪的 Promise
@@ -205,7 +213,7 @@ export const useBridge = () => {
     // App 配置
     async getAppConfig() {
       const res = await callPy('get_app_config');
-      return res.code === 0 ? res.data : { min_to_tray: true, is_win32: false, has_tray: false };
+      return res.code === 0 ? res.data : { min_to_tray: true, auto_connect_danmu: true, is_win32: false, has_tray: false };
     },
     async setAppConfig(key, value) {
       const res = await callPy('set_app_config', key, value);
