@@ -206,7 +206,7 @@ jobs:
         elif [ "$RUNNER_OS" == "macOS" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
-              --onefile \
+              --onedir \
               --add-data "frontend/dist:frontend/dist" \
               --add-data "bilibili.ico:." \
               --add-data "VERSION:." \
@@ -241,7 +241,7 @@ jobs:
         elif [ "$RUNNER_OS" == "macOS" ]; then
           APP_NAME="BiliLiveTool.app"
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
-          7z a -r $ASSET_NAME dist/$APP_NAME
+          7z a -snl -r $ASSET_NAME dist/$APP_NAME
         else # Linux
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.tar.gz"
           tar -czvf $ASSET_NAME -C dist BiliLiveTool

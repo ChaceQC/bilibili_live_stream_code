@@ -93,8 +93,11 @@
 
    - **macOS**:
      ```bash
-     pyinstaller main.py --name BiliLiveTool --onefile --add-data "frontend/dist:frontend/dist" --icon "bilibili.icns" --hidden-import _cffi_backend --windowed
+     pyinstaller main.py --name BiliLiveTool --onedir --add-data "frontend/dist:frontend/dist" --icon "bilibili.icns" --hidden-import _cffi_backend --windowed
      ```
+
+     macOS 使用目录打包模式，避免再次打开应用时单文件启动器产生额外 Dock 图标；在 Finder 中仍显示为一个 `.app` 应用。
+     使用 `7z` 压缩 macOS 应用时需添加 `-snl` 保留符号链接，确保 Qt 框架结构和签名完整。
 
    - **Linux**:
      ```bash
