@@ -32,8 +32,9 @@ jobs:
     needs: update-version
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-15-intel, windows-latest]
+        os: [ubuntu-22.04, macos-15-intel, macos-14, windows-latest]
         include:
           - os: ubuntu-22.04
             asset_name_suffix: linux-amd64
@@ -43,6 +44,12 @@ jobs:
             asset_name_suffix: macos-amd64
             pyinstaller_options: "--windowed"
             icon_ext: "icns"
+            architecture: x64
+          - os: macos-14
+            asset_name_suffix: macos-arm64
+            pyinstaller_options: "--windowed"
+            icon_ext: "icns"
+            architecture: arm64
           - os: windows-latest
             asset_name_suffix: windows-amd64
             pyinstaller_options: "--noconsole"
@@ -55,9 +62,24 @@ jobs:
         ref: ${{ github.sha }}
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: '3.9'
+        architecture: ${{ matrix.architecture || 'x64' }}
+
+    - name: Verify macOS Python architecture
+      if: runner.os == 'macOS'
+      env:
+        EXPECTED_ARCH: ${{ matrix.architecture == 'arm64' && 'arm64' || 'x86_64' }}
+      run: |
+        python - <<'PY'
+        import os, platform
+        actual = platform.machine()
+        expected = os.environ['EXPECTED_ARCH']
+        assert actual == expected, f'Expected {expected}, got {actual}'
+        print(f'Building natively for {actual}')
+        PY
+      shell: bash
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -85,7 +107,7 @@ jobs:
     # --- 步骤：自动处理图标 (macOS转icns, Linux转png) ---
     - name: Prepare Platform Icon
       run: |
-        if [ "${{ matrix.os }}" == "macos-15-intel" ]; then
+        if [ "$RUNNER_OS" == "macOS" ]; then
           echo "Converting ICO to ICNS for macOS..."
           sips -s format png bilibili.ico --out temp_icon.png
           mkdir bilibili.iconset
@@ -181,19 +203,31 @@ jobs:
             --hidden-import qtpy \
             --hidden-import PyQt5 \
             --hidden-import webview.platforms.qt
-        elif [ "${{ matrix.os }}" == "macos-15-intel" ]; then
+        elif [ "$RUNNER_OS" == "macOS" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
-              --onefile \
+              --onedir \
               --add-data "frontend/dist:frontend/dist" \
               --add-data "bilibili.ico:." \
               --add-data "VERSION:." \
               --icon "$ICON_NAME" \
               --hidden-import _cffi_backend \
+              --target-architecture "${{ matrix.architecture == 'arm64' && 'arm64' || 'x86_64' }}" \
               $EXTRA_ARGS \
               ${{ matrix.pyinstaller_options }}
         fi
 
+      shell: bash
+
+    - name: Verify macOS application
+      if: runner.os == 'macOS'
+      env:
+        EXPECTED_ARCH: ${{ matrix.architecture == 'arm64' && 'arm64' || 'x86_64' }}
+      run: |
+        APP="dist/BiliLiveTool.app"
+        file "$APP/Contents/MacOS/BiliLiveTool"
+        test "$(lipo -archs "$APP/Contents/MacOS/BiliLiveTool")" = "$EXPECTED_ARCH"
+        codesign --verify --deep --strict "$APP"
       shell: bash
 
     - name: Prepare Artifacts
@@ -204,10 +238,10 @@ jobs:
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
           mv dist/$EXE_NAME .
           7z a $ASSET_NAME $EXE_NAME
-        elif [ "${{ matrix.os }}" == "macos-15-intel" ]; then
+        elif [ "$RUNNER_OS" == "macOS" ]; then
           APP_NAME="BiliLiveTool.app"
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.zip"
-          7z a -r $ASSET_NAME dist/$APP_NAME
+          7z a -snl -r $ASSET_NAME dist/$APP_NAME
         else # Linux
           ASSET_NAME="BiliLiveTool-${VERSION}-${{ matrix.asset_name_suffix }}.tar.gz"
           tar -czvf $ASSET_NAME -C dist BiliLiveTool
@@ -220,6 +254,7 @@ jobs:
       with:
         name: BiliLiveTool-${{ github.ref_name }}-${{ matrix.asset_name_suffix }}
         path: ${{ env.ASSET_NAME }}
+        if-no-files-found: error
 
   create-release:
     name: Create GitHub Release
@@ -316,7 +351,7 @@ jobs:
       shell: bash
 
     - name: Create Release and Upload Assets
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         files: artifacts/*/*
         body: |
@@ -329,7 +364,8 @@ jobs:
           ### 📦 下载地址
           请根据您的系统选择对应的版本进行下载：
           - **Windows**: 下载 `.zip` 解压即用
-          - **macOS**: 下载 `.zip` 解压运行
+          - **macOS Apple Silicon (M 系列)**: 下载 `macos-arm64.zip` 解压运行
+          - **macOS Intel**: 下载 `macos-amd64.zip` 解压运行
           - **Linux**: 下载 `.tar.gz` 解压使用
 
           ### 🛡️ Windows 用户安全提示

@@ -19,6 +19,11 @@
 
 ## 自行构建
 
+### macOS 下载
+
+- Apple Silicon（M1/M2/M3/M4 等 M 系列）请选择 `macos-arm64.zip`；Intel Mac 请选择 `macos-amd64.zip`。
+- arm64 版本在原生 Apple Silicon runner 上打包，并检查可执行文件架构和应用签名完整性。
+
 ### 环境要求
 
 - **Python**: 3.9+
@@ -88,8 +93,11 @@
 
    - **macOS**:
      ```bash
-     pyinstaller main.py --name BiliLiveTool --onefile --add-data "frontend/dist:frontend/dist" --icon "bilibili.icns" --hidden-import _cffi_backend --windowed
+     pyinstaller main.py --name BiliLiveTool --onedir --add-data "frontend/dist:frontend/dist" --icon "bilibili.icns" --hidden-import _cffi_backend --windowed
      ```
+
+     macOS 使用目录打包模式，避免再次打开应用时单文件启动器产生额外 Dock 图标；在 Finder 中仍显示为一个 `.app` 应用。
+     使用 `7z` 压缩 macOS 应用时需添加 `-snl` 保留符号链接，确保 Qt 框架结构和签名完整。
 
    - **Linux**:
      ```bash
