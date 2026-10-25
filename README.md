@@ -19,6 +19,13 @@
 
 ## 自行构建
 
+### macOS 下载与 Actions 构建
+
+- Apple Silicon（M1/M2/M3/M4 等 M 系列）请选择 `macos-arm64.zip`；Intel Mac 请选择 `macos-amd64.zip`。
+- 在 GitHub 的 **Actions → Release BiliLiveTool → Run workflow** 中可手动构建。完成后，在该次运行的 **Artifacts** 中下载对应平台的压缩包。
+- 推送 `v*` 标签时，会同时构建 Windows x64、Linux x64、macOS Intel 和 macOS arm64，并发布到 Releases。手动构建只生成 Artifacts。
+- arm64 版本在原生 Apple Silicon runner 上打包，并检查可执行文件架构和应用签名完整性。
+
 ### 环境要求
 
 - **Python**: 3.9+
