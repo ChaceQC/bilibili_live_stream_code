@@ -1,5 +1,11 @@
 import os
 import sys
+import mimetypes
+
+# Windows 注册表可能将 .js 映射为 text/plain，导致 WebView 拒绝加载模块脚本。
+# 在导入 webview、启动其静态文件服务之前固定前端资源的 MIME 类型。
+mimetypes.add_type('text/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
 
 
 def _append_env_flags(name, *flags):
