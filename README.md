@@ -59,6 +59,12 @@
    > 若启动时提示 `Qt platform plugin "xcb" could not be found`，请安装：  
    > `sudo apt install libxcb-xinerama0 libxcb-cursor0 libnss3`
 
+   Linux 的 Qt5 后端默认启用高 DPI 缩放，跟随桌面设置，无需固定为 200%。已有的 `QT_ENABLE_HIGHDPI_SCALING`、`QT_SCALE_FACTOR` 设置会保留。
+
+   Wayland 下按住顶部标题栏空白处即可拖动窗口。程序在 Qt 原始鼠标事件中请求桌面系统移动窗口，右上角窗口按钮不属于拖动区域。
+
+   使用 Fcitx5 时，若设置了 `QT_IM_MODULE=fcitx`，程序会优先使用当前 Qt 的 Fcitx 插件，缺失时查找常见系统 Qt 插件目录，并验证插件能否加载。可通过系统软件包安装 Qt5 的 Fcitx 输入法插件，或通过 `QT_PLUGIN_PATH` 指定自定义插件目录。只有找不到可加载的 Fcitx 插件时才尝试 IBus 回退；这需要 Fcitx5 的 IBus 前端启用且能被 Qt 连接，不能保证在所有桌面环境生效。其他输入法设置保持不变。
+
    从源码运行时还需 pip 安装：
    ```bash
    pip install PyGObject

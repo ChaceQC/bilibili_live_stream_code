@@ -33,6 +33,8 @@ if sys.platform == 'linux':
         os.environ["QT_QPA_PLATFORMTHEME"] = ""
     # QtWebEngine 5.15 可能不支持显式 ozone 参数，这里交给 Qt 自行选择 Wayland/X11。
     _append_env_flags("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu", "--no-sandbox")
+    from backend.qt_runtime import configure_linux_qt
+    configure_linux_qt()
 elif sys.platform == 'win32':
     os.environ["QT_OPENGL"] = "software"
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
@@ -154,7 +156,7 @@ if __name__ == '__main__':
         width=window_width,
         height=window_height,
         frameless=True,
-        easy_drag=False, # 仅通过 pywebview-drag-region CSS 类标记拖拽区域
+        easy_drag=False, # 使用自定义标题栏拖动，Linux Qt 由原生鼠标事件发起系统移动
         # hidden=True
     )
     def center_and_show_window(window):

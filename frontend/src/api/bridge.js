@@ -65,6 +65,9 @@ export const useBridge = () => {
     state,
 
     // 窗口拖拽
+    async setWindowDragRegion(height, rightInset) {
+      return await callPy('window_set_drag_region', height, rightInset);
+    },
     async getWindowPosition() {
       return await callPy('get_window_position');
     },

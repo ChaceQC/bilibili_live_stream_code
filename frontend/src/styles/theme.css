@@ -80,7 +80,3 @@ body {
   border-radius: 8px; overflow: hidden;
 }
 .qr-box img { width: 100%; height: 100%; }
-
-.pywebview-drag-region {
-  -webkit-app-region: drag;
-}

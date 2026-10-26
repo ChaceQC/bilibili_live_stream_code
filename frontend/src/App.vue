@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, provide } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, provide, nextTick } from 'vue';
 import QRCode from 'qrcode';
 import { useBridge } from '@/api/bridge';
 import Sidebar from '@/components/Sidebar.vue';
@@ -12,7 +12,7 @@ import MessageModal from '@/components/MessageModal.vue';
 import UserAccountModal from '@/components/UserAccountModal.vue';
 import WindowControls from '@/components/WindowControls.vue';
 
-const { loadSavedConfig, getWindowPosition, windowDrag, refreshCurrentUser, syncRoomProfile } = useBridge();
+const { loadSavedConfig, getWindowPosition, windowDrag, setWindowDragRegion, refreshCurrentUser, syncRoomProfile } = useBridge();
 const activeTab = ref('account');
 const isInitializing = ref(true);
 
@@ -69,7 +69,9 @@ const syncRoomProfileToForm = async () => {
   }
 };
 
-// --- [终极优化] 指针捕获拖拽逻辑 ---
+// Wayland uses compositor-driven movement; other platforms can use coordinates.
+let dragPointerId = null;
+let coordinateDrag = false;
 const initialDragState = ref({
   windowX: 0,
   windowY: 0,
@@ -78,25 +80,28 @@ const initialDragState = ref({
 });
 
 const handlePointerDown = async (event) => {
-  // 只在拖拽栏的空白处生效
-  if (event.target.classList.contains('drag-bar')) {
+  // Ignore window controls and non-left buttons.
+  if (event.button === 0 && event.target === event.currentTarget) {
+    const element = event.currentTarget;
+    dragPointerId = event.pointerId;
+    coordinateDrag = false;
+    element.setPointerCapture(event.pointerId);
     const initialWindowPos = await getWindowPosition();
-    if (initialWindowPos) {
+    if (initialWindowPos && dragPointerId === event.pointerId) {
       initialDragState.value = {
         windowX: initialWindowPos.x,
         windowY: initialWindowPos.y,
         mouseX: event.screenX,
         mouseY: event.screenY,
       };
-      // [关键] 捕获指针，让事件在鼠标移出窗口后也能继续触发
-      event.target.setPointerCapture(event.pointerId);
+      coordinateDrag = true;
     }
   }
 };
 
 const handlePointerMove = (event) => {
-  // event.target.hasPointerCapture(event.pointerId) 检查当前元素是否正在捕获指针
-  if (event.target.hasPointerCapture && event.target.hasPointerCapture(event.pointerId)) {
+  // Native Qt moves consume the press; this path handles coordinate dragging.
+  if (coordinateDrag && event.pointerId === dragPointerId) {
     const deltaX = event.screenX - initialDragState.value.mouseX;
     const deltaY = event.screenY - initialDragState.value.mouseY;
     const targetX = initialDragState.value.windowX + deltaX;
@@ -106,12 +111,22 @@ const handlePointerMove = (event) => {
 };
 
 const handlePointerUp = (event) => {
+  dragPointerId = null;
+  coordinateDrag = false;
   // [关键] 释放指针捕获
   if (event.target.hasPointerCapture && event.target.hasPointerCapture(event.pointerId)) {
     event.target.releasePointerCapture(event.pointerId);
   }
 };
 // --- 结束 ---
+
+const updateDragRegion = () => {
+  const bar = document.querySelector('.drag-bar');
+  const controls = bar?.querySelector('.window-controls');
+  if (bar && controls) {
+    setWindowDragRegion(bar.getBoundingClientRect().height, controls.getBoundingClientRect().width);
+  }
+};
 
 onMounted(async () => {
   try {
@@ -123,6 +138,10 @@ onMounted(async () => {
       await syncRoomProfileToForm();
     }
   } catch (e) { console.error(e); } finally { isInitializing.value = false; }
+
+  await nextTick();
+  updateDragRegion();
+  window.addEventListener('resize', updateDragRegion);
 
   // --- 注册托盘事件处理函数 ---
   window.onTrayLiveStarted = (data) => {
@@ -156,6 +175,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateDragRegion);
   window.onTrayLiveStarted = null;
   window.onTrayNeedFaceVerify = null;
   window.onTrayLiveStopped = null;
@@ -197,10 +217,12 @@ const handleSidebarAccountClick = () => {
 
   <div v-else class="app-root">
     <div
-      class="drag-bar pywebview-drag-region"
+      class="drag-bar"
       @pointerdown="handlePointerDown"
       @pointermove="handlePointerMove"
       @pointerup="handlePointerUp"
+      @pointercancel="handlePointerUp"
+      @lostpointercapture="handlePointerUp"
     >
       <div class="app-title">B站直播工具</div>
       <WindowControls />

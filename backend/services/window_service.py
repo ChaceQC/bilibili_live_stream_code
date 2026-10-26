@@ -1,5 +1,6 @@
 import webview
 import logging
+import sys
 
 logger = logging.getLogger("WindowService")
 
@@ -51,6 +52,15 @@ class WindowService:
         window = self._get_window()
         if window:
             window.move(target_x, target_y)
+
+    def window_set_drag_region(self, height, right_inset):
+        if sys.platform != 'linux':
+            return False
+        window = self._get_window()
+        if not window or not getattr(window, 'native', None):
+            return False
+        from backend.qt_window import set_drag_region
+        return set_drag_region(window.native, height, right_inset)
 
     def send_to_frontend(self, function_name, data):
         """发送数据到前端"""
