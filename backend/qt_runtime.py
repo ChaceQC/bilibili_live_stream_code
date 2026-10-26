@@ -49,7 +49,8 @@ def _enable_system_fcitx_plugin():
 
 def configure_linux_qt():
     # Qt5 需要显式启用高 DPI 缩放，让 Qt 跟随桌面设置，并保留用户指定的缩放配置
-    os.environ.setdefault('QT_ENABLE_HIGHDPI_SCALING', '1')
+    if 'QT_AUTO_SCREEN_SCALE_FACTOR' not in os.environ:
+        os.environ.setdefault('QT_ENABLE_HIGHDPI_SCALING', '1')
 
     # PyQt5 安装包通常不包含第三方 Fcitx 插件，优先查找可加载的系统插件
     # 找不到时再尝试 Fcitx5 的 IBus 前端，保留其他输入法设置（包括显式空值）

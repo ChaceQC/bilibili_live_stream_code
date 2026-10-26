@@ -17,6 +17,8 @@ python -m unittest discover -s tests -v
 3. 在装有兼容 Fcitx Qt 插件的环境中重复输入测试，确认继续使用 Fcitx。
 4. 在 X11/XWayland 和 KDE Wayland 下确认启动及输入正常；KDE 未设置 `QT_IM_MODULE` 时应保留桌面默认行为。
 
+原生拖动过滤器只在 Qt 的 `wayland` 平台启用。Windows、macOS 和 X11/XWayland 保留原有前端指针捕获代码、拖动区域类名及样式。
+
 可使用 `QT_DEBUG_PLUGINS=1` 查看加载的 `platforminputcontexts` 插件。自动化测试不覆盖真实输入法服务的候选框和快捷键。拖动测试通过实际 Qt 鼠标事件检查标题栏命中、按钮和正文排除、其他窗口隔离，以及从后台调用切换到 GUI 线程安装事件过滤器；真实 Wayland 桌面是否接受拖动仍需人工确认。
 
 ## 2026-10-26 本机验证
@@ -28,5 +30,6 @@ KDE Wayland + Fcitx5/Rime，双屏桌面缩放为 100% / 150%。测试窗口使�
 - 去掉临时 `QT_PLUGIN_PATH` 后，修复代码自动找到系统插件，重启复测仍能正常输入中文。单文件打包的冒烟程序也能自动选择 Fcitx 插件并接收中文提交事件。
 - 窗口跨屏时网页设备像素比由 1 变为 2。Qt5 在原生 Wayland 下报告整数设备像素比，此记录不代表已经验证了所有桌面的分数缩放。
 - Wayland 不支持原有的逐帧设置全局窗口坐标。通过网页异步调用 `startSystemMove()` 也在本机返回失败；改为 Qt 原始鼠标按下事件内调用后，日志确认桌面接受请求，用户确认可以正常拖动窗口。
+- 完整 Linux 测试包曾因自带旧 `libstdc++.so.6` 缺少系统 Fcitx 插件所需的 `CXXABI_1.3.15` 而加载失败。打包时排除这份运行库、使用目标系统版本后，普通启动即可加载 Fcitx，用户确认中文输入和拖动正常。该处理已同步到正式 Linux 打包步骤。
 
 参考：[Qt 高 DPI](https://doc.qt.io/qt-6/highdpi.html)、[Fcitx5 Wayland 与 Qt/IBus 兼容说明](https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland#QT_IM_MODULE)。

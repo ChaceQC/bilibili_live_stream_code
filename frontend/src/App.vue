@@ -69,10 +69,7 @@ const syncRoomProfileToForm = async () => {
   }
 };
 
-// --- 指针捕获拖拽逻辑 ---
-// Wayland 由桌面系统处理原生拖动，其他平台保留坐标拖动方式
-let dragPointerId = null;
-let coordinateDrag = false;
+// --- [终极优化] 指针捕获拖拽逻辑 ---
 const initialDragState = ref({
   windowX: 0,
   windowY: 0,
@@ -81,28 +78,25 @@ const initialDragState = ref({
 });
 
 const handlePointerDown = async (event) => {
-  // 只处理标题栏空白处的鼠标左键，排除窗口控制按钮
-  if (event.button === 0 && event.target === event.currentTarget) {
-    const element = event.currentTarget;
-    dragPointerId = event.pointerId;
-    coordinateDrag = false;
-    element.setPointerCapture(event.pointerId);
+  // 只在拖拽栏的空白处生效
+  if (event.target.classList.contains('drag-bar')) {
     const initialWindowPos = await getWindowPosition();
-    if (initialWindowPos && dragPointerId === event.pointerId) {
+    if (initialWindowPos) {
       initialDragState.value = {
         windowX: initialWindowPos.x,
         windowY: initialWindowPos.y,
         mouseX: event.screenX,
         mouseY: event.screenY,
       };
-      coordinateDrag = true;
+      // [关键] 捕获指针，让事件在鼠标移出窗口后也能继续触发
+      event.target.setPointerCapture(event.pointerId);
     }
   }
 };
 
 const handlePointerMove = (event) => {
-  // Qt 原生拖动会拦截鼠标按下事件，此处处理坐标拖动
-  if (coordinateDrag && event.pointerId === dragPointerId) {
+  // event.target.hasPointerCapture(event.pointerId) 检查当前元素是否正在捕获指针
+  if (event.target.hasPointerCapture && event.target.hasPointerCapture(event.pointerId)) {
     const deltaX = event.screenX - initialDragState.value.mouseX;
     const deltaY = event.screenY - initialDragState.value.mouseY;
     const targetX = initialDragState.value.windowX + deltaX;
@@ -112,8 +106,6 @@ const handlePointerMove = (event) => {
 };
 
 const handlePointerUp = (event) => {
-  dragPointerId = null;
-  coordinateDrag = false;
   // [关键] 释放指针捕获
   if (event.target.hasPointerCapture && event.target.hasPointerCapture(event.pointerId)) {
     event.target.releasePointerCapture(event.pointerId);
@@ -218,12 +210,10 @@ const handleSidebarAccountClick = () => {
 
   <div v-else class="app-root">
     <div
-      class="drag-bar"
+      class="drag-bar pywebview-drag-region"
       @pointerdown="handlePointerDown"
       @pointermove="handlePointerMove"
       @pointerup="handlePointerUp"
-      @pointercancel="handlePointerUp"
-      @lostpointercapture="handlePointerUp"
     >
       <div class="app-title">B站直播工具</div>
       <WindowControls />

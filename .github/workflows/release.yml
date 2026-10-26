@@ -194,7 +194,7 @@ jobs:
           $EXTRA_ARGS \
           ${{ matrix.pyinstaller_options }}
         elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           pyinstaller main.py --name BiliLiveTool --onefile \
+           pyi-makespec main.py --name BiliLiveTool --onefile \
             --add-data "frontend/dist:frontend/dist" \
             --add-data "bilibili.ico:." \
             --add-data "VERSION:." \
@@ -203,6 +203,24 @@ jobs:
             --hidden-import qtpy \
             --hidden-import PyQt5 \
             --hidden-import webview.platforms.qt
+           # 使用目标系统的 C++ 运行库，避免自带旧版本阻止系统输入法插件加载
+           python - <<'PYCODE'
+        from pathlib import Path
+        spec = Path('BiliLiveTool.spec')
+        source = spec.read_text()
+        marker = 'pyz = PYZ('
+        assert source.count(marker) == 1
+        source = source.replace(marker, "a.binaries = [item for item in a.binaries if item[0].rsplit('/', 1)[-1] != 'libstdc++.so.6']\n\n" + marker)
+        spec.write_text(source)
+        PYCODE
+           pyinstaller --noconfirm BiliLiveTool.spec
+           python - <<'PYCODE'
+        from pathlib import Path
+        from PyInstaller.archive.readers import CArchiveReader
+        archive = CArchiveReader('dist/BiliLiveTool')
+        assert not any(Path(name).name == 'libstdc++.so.6' for name in archive.toc)
+        print('Verified: libstdc++ will be provided by the target system')
+        PYCODE
         elif [ "$RUNNER_OS" == "macOS" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \

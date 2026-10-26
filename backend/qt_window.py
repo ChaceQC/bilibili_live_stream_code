@@ -34,7 +34,7 @@ class _MoveFilter(QObject):
 def set_drag_region(window, height, right_inset):
     """在 Qt 界面线程中安装或更新标题栏拖动区域。"""
     app = QApplication.instance()
-    if app is None:
+    if app is None or app.platformName() != 'wayland':
         return False
 
     def install():

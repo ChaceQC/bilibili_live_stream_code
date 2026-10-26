@@ -27,6 +27,9 @@ from qtpy.QtWidgets import QApplication, QWidget
 from qtpy.QtTest import QTest
 from backend.qt_window import set_drag_region
 app = QApplication([])
+# 无头环境中验证 Wayland 事件处理；其他平台应保持原有拖动方式
+assert not set_drag_region(QWidget(), 32, 138)
+app.platformName = lambda: 'wayland'
 window = QWidget()
 window.resize(1000, 720)
 child = QWidget(window)

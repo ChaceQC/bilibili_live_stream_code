@@ -28,6 +28,8 @@ print(json.dumps([app.primaryScreen().devicePixelRatio(), window.width(), window
             ('96', {}, 1.0),
             ('192', {}, 2.0),
             ('192', {'QT_ENABLE_HIGHDPI_SCALING': '0'}, 1.0),
+            ('192', {'QT_AUTO_SCREEN_SCALE_FACTOR': '0'}, 1.0),
+            ('192', {'QT_AUTO_SCREEN_SCALE_FACTOR': '1'}, 2.0),
             ('96', {'QT_SCALE_FACTOR': '1.5'}, 1.5),
         ]:
             with self.subTest(dpi=dpi, overrides=overrides):
