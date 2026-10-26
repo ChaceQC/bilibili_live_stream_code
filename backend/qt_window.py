@@ -1,4 +1,4 @@
-"""Qt window gestures must start during native mouse event dispatch."""
+"""Qt 窗口拖动，需在原生鼠标事件处理期间发起。"""
 
 import logging
 from qtpy.QtCore import QObject, QEvent, Qt, QThread, QMetaObject, Q_RETURN_ARG, Slot
@@ -25,14 +25,14 @@ class _MoveFilter(QObject):
                 handle = self.window.windowHandle()
                 started = bool(handle and handle.startSystemMove())
                 logger.debug('Native mouse system move accepted: %s', started)
-                # Consume the press only after the compositor accepts the move.
-                # Otherwise the frontend can use its coordinate-based fallback.
+                # 桌面接受移动请求后才拦截鼠标事件
+                # 否则交给前端，保留原有的坐标拖动方式
                 return started
         return False
 
 
 def set_drag_region(window, height, right_inset):
-    """Install/update the titlebar hit area on Qt's GUI thread."""
+    """在 Qt 界面线程中安装或更新标题栏拖动区域。"""
     app = QApplication.instance()
     if app is None:
         return False

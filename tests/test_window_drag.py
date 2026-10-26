@@ -49,14 +49,14 @@ thread.join(1)
 assert result == [True], result
 QTest.mouseClick(child, Qt.LeftButton, pos=QPoint(100, 15))
 assert len(calls) == 1, calls
-# Controls, content, other buttons and other windows must keep their input.
+# 窗口控制按钮、正文、其他鼠标按键及其他窗口的输入不应被拦截
 QTest.mouseClick(child, Qt.LeftButton, pos=QPoint(950, 15))
 QTest.mouseClick(child, Qt.LeftButton, pos=QPoint(100, 100))
 QTest.mouseClick(child, Qt.RightButton, pos=QPoint(100, 15))
 other = QWidget()
 QTest.mouseClick(other, Qt.LeftButton, pos=QPoint(10, 10))
 assert len(calls) == 1, calls
-# Repeated registration updates the area without installing another filter.
+# 重复注册只更新区域，不重复安装事件过滤器
 handler = window._bili_move_filter
 assert set_drag_region(window, 40, 200)
 assert window._bili_move_filter is handler

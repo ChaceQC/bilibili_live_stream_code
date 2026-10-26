@@ -69,7 +69,8 @@ const syncRoomProfileToForm = async () => {
   }
 };
 
-// Wayland uses compositor-driven movement; other platforms can use coordinates.
+// --- 指针捕获拖拽逻辑 ---
+// Wayland 由桌面系统处理原生拖动，其他平台保留坐标拖动方式
 let dragPointerId = null;
 let coordinateDrag = false;
 const initialDragState = ref({
@@ -80,7 +81,7 @@ const initialDragState = ref({
 });
 
 const handlePointerDown = async (event) => {
-  // Ignore window controls and non-left buttons.
+  // 只处理标题栏空白处的鼠标左键，排除窗口控制按钮
   if (event.button === 0 && event.target === event.currentTarget) {
     const element = event.currentTarget;
     dragPointerId = event.pointerId;
@@ -100,7 +101,7 @@ const handlePointerDown = async (event) => {
 };
 
 const handlePointerMove = (event) => {
-  // Native Qt moves consume the press; this path handles coordinate dragging.
+  // Qt 原生拖动会拦截鼠标按下事件，此处处理坐标拖动
   if (coordinateDrag && event.pointerId === dragPointerId) {
     const deltaX = event.screenX - initialDragState.value.mouseX;
     const deltaY = event.screenY - initialDragState.value.mouseY;

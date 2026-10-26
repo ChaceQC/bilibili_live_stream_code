@@ -12,8 +12,8 @@ from backend.qt_runtime import configure_linux_qt, _has_input_context_plugin
 
 class LinuxQtTests(unittest.TestCase):
     def test_real_qt_screen_scaling(self):
-        # Each case needs a fresh process: Qt reads DPI settings when the
-        # application is constructed, and cannot recreate it safely in-process.
+        # Qt 在创建应用时读取 DPI 设置，同一进程中不能安全地重复创建
+        # 每组设置使用独立进程验证
         script = '''
 import json
 from backend.qt_runtime import configure_linux_qt

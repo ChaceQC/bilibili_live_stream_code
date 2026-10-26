@@ -1,4 +1,4 @@
-"""Linux Qt setup that must run before pywebview creates QApplication."""
+"""Linux Qt 初始化，需在 pywebview 创建 QApplication 前执行。"""
 
 import os
 import sysconfig
@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 def _has_input_context_plugin(name, plugin_paths=None):
-    # Use Qt's search paths, including QT_PLUGIN_PATH and PyInstaller's relocated
-    # plugin directory. A distro's Qt plugin may be incompatible with bundled Qt.
+    # 使用 Qt 的插件搜索路径，包含 QT_PLUGIN_PATH 和 PyInstaller 打包后的目录
+    # 系统 Qt 插件可能与程序自带的 Qt 不兼容，需检查能否加载
     from qtpy.QtCore import QCoreApplication, QLibraryInfo, QPluginLoader
 
     if plugin_paths is None:
@@ -38,8 +38,8 @@ def _enable_system_fcitx_plugin():
 
     for directory in candidates:
         if _has_input_context_plugin('fcitx', [directory]):
-            # Append rather than prepend so bundled platform/rendering plugins
-            # keep priority. Qt rejects plugins built for incompatible versions.
+            # 将系统目录追加到末尾，优先使用程序自带的平台和渲染插件
+            # Qt 会拒绝加载版本不兼容的插件
             paths = QCoreApplication.libraryPaths()
             if directory not in paths:
                 QCoreApplication.setLibraryPaths([*paths, directory])
@@ -48,13 +48,11 @@ def _enable_system_fcitx_plugin():
 
 
 def configure_linux_qt():
-    # Qt 5 high-DPI scaling is opt-in. Let Qt read the desktop's scale instead
-    # of hard-coding a factor, and preserve an explicit user override.
+    # Qt5 需要显式启用高 DPI 缩放，让 Qt 跟随桌面设置，并保留用户指定的缩放配置
     os.environ.setdefault('QT_ENABLE_HIGHDPI_SCALING', '1')
 
-    # PyQt5 wheels usually omit the third-party Fcitx plugin. First look for
-    # a loadable system plugin; Fcitx5's optional IBus frontend is a fallback.
-    # Keep other IM selections (including an explicitly empty one) untouched.
+    # PyQt5 安装包通常不包含第三方 Fcitx 插件，优先查找可加载的系统插件
+    # 找不到时再尝试 Fcitx5 的 IBus 前端，保留其他输入法设置（包括显式空值）
     if os.environ.get('QT_IM_MODULE') == 'fcitx':
         if _has_input_context_plugin('fcitx') or _enable_system_fcitx_plugin():
             return
