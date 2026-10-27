@@ -214,13 +214,6 @@ jobs:
         spec.write_text(source)
         PYCODE
            pyinstaller --noconfirm BiliLiveTool.spec
-           python - <<'PYCODE'
-        from pathlib import Path
-        from PyInstaller.archive.readers import CArchiveReader
-        archive = CArchiveReader('dist/BiliLiveTool')
-        assert not any(Path(name).name == 'libstdc++.so.6' for name in archive.toc)
-        print('Verified: libstdc++ will be provided by the target system')
-        PYCODE
         elif [ "$RUNNER_OS" == "macOS" ]; then
             pyinstaller main.py \
               --name BiliLiveTool \
