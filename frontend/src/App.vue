@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, provide } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, provide, nextTick } from 'vue';
 import QRCode from 'qrcode';
 import { useBridge } from '@/api/bridge';
 import Sidebar from '@/components/Sidebar.vue';
@@ -12,7 +12,7 @@ import MessageModal from '@/components/MessageModal.vue';
 import UserAccountModal from '@/components/UserAccountModal.vue';
 import WindowControls from '@/components/WindowControls.vue';
 
-const { loadSavedConfig, getWindowPosition, windowDrag, refreshCurrentUser, syncRoomProfile } = useBridge();
+const { loadSavedConfig, getWindowPosition, windowDrag, setWindowDragRegion, refreshCurrentUser, syncRoomProfile } = useBridge();
 const activeTab = ref('account');
 const isInitializing = ref(true);
 
@@ -113,6 +113,14 @@ const handlePointerUp = (event) => {
 };
 // --- 结束 ---
 
+const updateDragRegion = () => {
+  const bar = document.querySelector('.drag-bar');
+  const controls = bar?.querySelector('.window-controls');
+  if (bar && controls) {
+    setWindowDragRegion(bar.getBoundingClientRect().height, controls.getBoundingClientRect().width);
+  }
+};
+
 onMounted(async () => {
   try {
     const user = await loadSavedConfig();
@@ -123,6 +131,10 @@ onMounted(async () => {
       await syncRoomProfileToForm();
     }
   } catch (e) { console.error(e); } finally { isInitializing.value = false; }
+
+  await nextTick();
+  updateDragRegion();
+  window.addEventListener('resize', updateDragRegion);
 
   // --- 注册托盘事件处理函数 ---
   window.onTrayLiveStarted = (data) => {
@@ -156,6 +168,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('resize', updateDragRegion);
   window.onTrayLiveStarted = null;
   window.onTrayNeedFaceVerify = null;
   window.onTrayLiveStopped = null;
