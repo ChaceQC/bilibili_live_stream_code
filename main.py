@@ -530,4 +530,11 @@ if __name__ == '__main__':
     # [Fix] 强制 Linux 使用 Qt 后端，确保与 QSystemTrayIcon 兼容
     # Windows 保持默认 (Edge/CEF)
     gui_backend = 'qt' if sys.platform != 'win32' else None
+    if gui_backend == 'qt':
+        def enable_clipboard_copy(window):
+            settings = window.native.webview.page().settings()
+            settings.setAttribute(settings.WebAttribute.JavascriptCanAccessClipboard, True)
+
+        window.events.before_show += enable_clipboard_copy
+
     webview.start(on_app_start, window, gui=gui_backend)
